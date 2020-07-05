@@ -8,6 +8,8 @@
 #include <QTimer>
 #include <QDebug>
 #include <QScreen>
+#include <QDir>
+#include <QSettings>
 
 VolumeController::VolumeController(QWidget *parent)
 	: QWidget(parent),
@@ -33,16 +35,25 @@ VolumeController::VolumeController(QWidget *parent)
 	layout->addWidget(deviceVolumeController, 0, 0);
 
 	createActions();
+
+	settingsPath = QDir::cleanPath(QApplication::applicationDirPath() + QDir::separator() + "settings.ini");
+	loadSettings();
+
 	createTray();
 	trayIcon->show();
+}
+
+VolumeController::~VolumeController() {
+	saveSettings();
 }
 
 void VolumeController::createActions() {
 	showAction = new QAction("Show", this);
 	connect(showAction, &QAction::triggered, this, &VolumeController::fadeIn);
 
-	hideAction = new QAction("Hide", this);
-	connect(hideAction, &QAction::triggered, this, &VolumeController::fadeOut);
+	showInactiveAction = new QAction("Show inactive", this);
+	showInactiveAction->setCheckable(true);
+	connect(showInactiveAction, &QAction::toggled, this, &VolumeController::setShowInactive);
 
 	exitAction = new QAction("Exit", this);
 	connect(exitAction, &QAction::triggered, this, &VolumeController::close);
@@ -52,6 +63,8 @@ void VolumeController::createTray() {
 	trayMenu = new QMenu(this);
 
 	trayMenu->addAction(showAction);
+	trayMenu->addSeparator();
+	trayMenu->addAction(showInactiveAction);
 	trayMenu->addSeparator();
 	trayMenu->addAction(exitAction);
 
@@ -70,6 +83,18 @@ void VolumeController::createTray() {
 	});
 
 	connect(&deviceVolumeController->deviceVolumeItem(), &DeviceVolumeItem::volumeChanged, this, &VolumeController::onDeviceVolumeChanged);
+}
+
+void VolumeController::loadSettings() {
+	QSettings settings(settingsPath, QSettings::IniFormat);
+	bool showInactive = settings.value("show-inactive", false).toBool();
+	showInactiveAction->setChecked(showInactive);
+}
+
+void VolumeController::saveSettings() {
+	QSettings settings(settingsPath, QSettings::IniFormat);
+	settings.setValue("show-inactive", deviceVolumeController->controlList().showInactive());
+	settings.sync();
 }
 
 void VolumeController::onDeviceVolumeChanged(const int volume) {
@@ -100,8 +125,12 @@ void VolumeController::fadeIn() {
 
 void VolumeController::resizeEvent(QResizeEvent *) {
 //	adjustSize();
-	qDebug() << "Resize VolumeController";
+//	qDebug() << "Resize VolumeController";
 	reposition();
+}
+
+void VolumeController::setShowInactive(bool value) {
+	deviceVolumeController->controlList().setShowInactive(value);
 }
 
 void VolumeController::reposition() {

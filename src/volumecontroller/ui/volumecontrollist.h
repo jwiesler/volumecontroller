@@ -26,6 +26,10 @@ public:
 
 	void resizeEvent(QResizeEvent *event) override;
 
+	bool showInactive() const { return _showInactive; }
+
+	void setShowInactive(bool value);
+
 private:
 	std::unique_ptr<SessionVolumeItem> createItem(AudioSession &sessionControl, const AudioSessionPidGroup &group);
 	void createItems();
@@ -50,6 +54,8 @@ private:
 	AudioSessionGroups &sessionGroups;
 	std::vector<SessionVolumeItemPtr> volumeItems;
 	std::vector<SessionVolumeItemPtr> volumeItemsInactive;
+
+	bool _showInactive = false;
 };
 
 #endif // VOLUMECONTROLLIST_H

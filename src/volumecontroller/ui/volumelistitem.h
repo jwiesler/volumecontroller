@@ -62,18 +62,23 @@ public:
 	void updatePeak();
 
 	void setIcon(const QIcon &icon);
+	void setInfo(const std::optional<QIcon> &icon, const QString &identifier);
 
 	const IAudioControl &control() const { return _control; }
+
+	void show();
+	void hide();
+
+	const QString &identifier() const { return _identifier; }
+
+	QPushButton *descriptionButton() { return _descriptionButton; }
+	PeakSlider *volumeSlider() { return _volumeSlider; }
+	QLabel *volumeLabel() { return _volumeLabel; }
 
 protected:
 	void setMuted(bool muted);
 	void setPeak(int volume);
 
-private:
-	void setMutedInternal(bool muted);
-	void setVolumeInternal(int volume);
-
-protected:
 	virtual void volumeChangedEvent(int value);
 	virtual void muteChangedEvent(bool mute);
 
@@ -87,13 +92,15 @@ signals:
 	void volumeChanged(int value);
 	void muteChanged(bool mute);
 
-public:
-	QString identifier;
-	QPushButton *descriptionButton;
-	PeakSlider *volumeSlider;
-	QLabel *volumeLabel;
-
 private:
+	void setMutedInternal(bool muted);
+	void setVolumeInternal(int volume);
+
+	QString _identifier;
+	QPushButton *_descriptionButton;
+	PeakSlider *_volumeSlider;
+	QLabel *_volumeLabel;
+
 	QIcon *icon = nullptr;
 	bool mutedValue;
 

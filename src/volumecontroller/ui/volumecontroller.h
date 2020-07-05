@@ -25,6 +25,7 @@ class VolumeController : public QWidget {
 
 public:
 	VolumeController(QWidget *parent = nullptr);
+	~VolumeController();
 
 	void onApplicationInactive(const QWidget *activeWindow);
 
@@ -36,25 +37,30 @@ public:
 
 	void resizeEvent(QResizeEvent *event) override;
 
+	void setShowInactive(bool value);
+
 private:
 	void createActions();
 	void createAnimations();
 	void createTray();
 
+	void loadSettings();
+	void saveSettings();
+
 	void onDeviceVolumeChanged(int volume);
 
 	void reposition();
 
-public:
 	DeviceVolumeController *deviceVolumeController = nullptr;
-private:
 	WindowFadeAnimation windowFadeAnimation;
 
 	QMenu * trayMenu = nullptr;
 	QSystemTrayIcon *trayIcon = nullptr;
 	QAction *showAction = nullptr;
-	QAction *hideAction = nullptr;
+	QAction *showInactiveAction = nullptr;
 	QAction *exitAction = nullptr;
 	VolumeIcons trayVolumeIcons;
+
+	QString settingsPath;
 };
 #endif // VOLUMECONTROLLER_H

@@ -20,6 +20,10 @@ public:
 	DeviceVolumeItem &deviceVolumeItem() { return *deviceItem; }
 
 	void resizeEvent(QResizeEvent *event) override;
+
+	VolumeControlList &controlList() { return *_controlList; }
+	const VolumeControlList &controlList() const { return *_controlList; }
+
 private:
 	void addSession(AudioSession* session);
 
@@ -29,7 +33,7 @@ private:
 	AudioDeviceManager manager;
 	AudioSessionGroups sessionGroups;
 	ComPtr<AudioSessionNotification> audioSessionNotification;
-	VolumeControlList *controlList = nullptr;
+	VolumeControlList *_controlList = nullptr;
 
 	DeviceAudioControl _deviceControl;
 	std::unique_ptr<DeviceVolumeItem> deviceItem;

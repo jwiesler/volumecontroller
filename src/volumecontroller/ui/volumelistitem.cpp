@@ -77,30 +77,30 @@ void PeakSlider::wheelEvent(QWheelEvent *e){
 }
 
 VolumeItemBase::VolumeItemBase(QWidget *parent, IAudioControl &ctrl) : QObject(parent), icon(nullptr), _control(ctrl) {
-	descriptionButton = new QPushButton(parent);
-	descriptionButton->setFlat(true);
-	descriptionButton->setCheckable(true);
-	descriptionButton->setIconSize(QSize(32, 32));
-	descriptionButton->setFixedSize(40, 40);
+	_descriptionButton = new QPushButton(parent);
+	_descriptionButton->setFlat(true);
+	_descriptionButton->setCheckable(true);
+	_descriptionButton->setIconSize(QSize(32, 32));
+	_descriptionButton->setFixedSize(40, 40);
 
-	volumeSlider = new PeakSlider(parent);
-	volumeSlider->setOrientation(Qt::Horizontal);
-	volumeSlider->setMaximum(100);
+	_volumeSlider = new PeakSlider(parent);
+	_volumeSlider->setOrientation(Qt::Horizontal);
+	_volumeSlider->setMaximum(100);
 
-	volumeLabel = new QLabel(parent);
-	QFont font = volumeLabel->font();
+	_volumeLabel = new QLabel(parent);
+	QFont font = _volumeLabel->font();
 	font.setPointSize(12);
-	volumeLabel->setFont(font);
-	volumeLabel->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
+	_volumeLabel->setFont(font);
+	_volumeLabel->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
 	QFontMetrics metrics(font);
-	volumeLabel->setFixedWidth(metrics.horizontalAdvance("100"));
+	_volumeLabel->setFixedWidth(metrics.horizontalAdvance("100"));
 
-	QObject::connect(volumeSlider, &QSlider::valueChanged, [this](int value) {
+	QObject::connect(_volumeSlider, &QSlider::valueChanged, [this](int value) {
 		setVolumeText(value);
 		volumeChangedEvent(value);
 	});
 
-	QObject::connect(descriptionButton, &QPushButton::clicked, [this](bool checked) {
+	QObject::connect(_descriptionButton, &QPushButton::clicked, [this](bool checked) {
 		setMuted(checked);
 	});
 
@@ -109,22 +109,22 @@ VolumeItemBase::VolumeItemBase(QWidget *parent, IAudioControl &ctrl) : QObject(p
 }
 
 VolumeItemBase::~VolumeItemBase() {
-	delete volumeSlider;
-	delete volumeLabel;
-	delete descriptionButton;
+	delete _volumeSlider;
+	delete _volumeLabel;
+	delete _descriptionButton;
 }
 
 void VolumeItemBase::setVolumeText(int volume) {
 	auto str = QString::number(volume);
-	if(str == volumeLabel->text())
+	if(str == _volumeLabel->text())
 		return;
-	volumeLabel->setText(str);
+	_volumeLabel->setText(str);
 }
 
 void VolumeItemBase::setVolumeSlider(int volume) {
-	if(volumeSlider->value() == (int)volume)
+	if(_volumeSlider->value() == (int)volume)
 		return;
-	volumeSlider->setValue(volume);
+	_volumeSlider->setValue(volume);
 }
 
 void VolumeItemBase::setMuted(bool muted) {
@@ -134,15 +134,15 @@ void VolumeItemBase::setMuted(bool muted) {
 
 void VolumeItemBase::setMutedInternal(bool muted) {
 	mutedValue = muted;
-	descriptionButton->setChecked(muted);
-	volumeSlider->setDisabled(muted);
-	volumeLabel->setDisabled(muted);
+	_descriptionButton->setChecked(muted);
+	_volumeSlider->setDisabled(muted);
+	_volumeLabel->setDisabled(muted);
 }
 
 void VolumeItemBase::setPeak(int volume) {
 	if(mutedValue)
 		volume = 0;
-	volumeSlider->setPeakValue(volume);
+	_volumeSlider->setPeakValue(volume);
 }
 
 bool VolumeItemBase::muted() const {
@@ -157,19 +157,41 @@ void VolumeItemBase::updatePeak() {
 }
 
 void VolumeItemBase::setIcon(const QIcon &icon) {
-	descriptionButton->setIcon(icon);
+	_descriptionButton->setIcon(icon);
+}
+
+void VolumeItemBase::setInfo(const std::optional<QIcon> &icon, const QString &identifier) {
+	_identifier = identifier;
+	if(icon.has_value()) {
+		_descriptionButton->setToolTip(identifier);
+		setIcon(*icon);
+	} else {
+		_descriptionButton->setText(identifier);
+	}
+}
+
+void VolumeItemBase::show() {
+	_descriptionButton->show();
+	_volumeSlider->show();
+	_volumeLabel->show();
+}
+
+void VolumeItemBase::hide() {
+	_descriptionButton->hide();
+	_volumeSlider->hide();
+	_volumeLabel->hide();
 }
 
 void VolumeItemBase::volumeChangedEvent(const int value) {
 	if(!_control.setVolume(value / 100.0f))
-		qDebug() << "Failed to set volume for" << identifier;
+		qDebug() << "Failed to set volume for" << identifier();
 
 	emit volumeChanged(value);
 }
 
 void VolumeItemBase::muteChangedEvent(const bool mute) {
 	if(!_control.setMuted(mute))
-		qDebug() << "Failed to set mute for" << identifier;
+		qDebug() << "Failed to set mute for" << identifier();
 
 	emit muteChanged(mute);
 }

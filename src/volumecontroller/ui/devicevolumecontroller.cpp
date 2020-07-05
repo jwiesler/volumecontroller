@@ -46,12 +46,12 @@ DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManag
 	createLineSeperator();
 	gridLayout.addWidget(separator, 1, 0, 1, 3);
 
-	controlList = new VolumeControlList(this, this->sessionGroups);
-	gridLayout.addWidget(controlList, 2, 0, 1, 3);
+	_controlList = new VolumeControlList(this, this->sessionGroups);
+	gridLayout.addWidget(_controlList, 2, 0, 1, 3);
 
 	QTimer *timer = new QTimer(this);
 	connect(timer, &QTimer::timeout, [this]() {
-		controlList->updatePeaks();
+		controlList().updatePeaks();
 		deviceItem->updatePeak();
 	});
 	timer->start(15);
@@ -62,12 +62,12 @@ DeviceVolumeController::~DeviceVolumeController() {
 }
 
 void DeviceVolumeController::resizeEvent(QResizeEvent *) {
-	qDebug() << "Resize DeviceVolumeController";
+//	qDebug() << "Resize DeviceVolumeController";
 	parentWidget()->adjustSize();
 }
 
 void DeviceVolumeController::addSession(AudioSession *sessionPtr) {
-	controlList->addSession(std::unique_ptr<AudioSession>(sessionPtr));
+	controlList().addSession(std::unique_ptr<AudioSession>(sessionPtr));
 }
 
 static const QIcon &GetVolumeIcon(const VolumeIcons &volumeIcons, const IAudioControl &control) {
@@ -76,7 +76,7 @@ static const QIcon &GetVolumeIcon(const VolumeIcons &volumeIcons, const IAudioCo
 
 void DeviceVolumeController::createDeviceItem() {
 	deviceItem = std::make_unique<DeviceVolumeItem>(this, _deviceControl, volumeIcons);
-	deviceItem->descriptionButton->setIcon(GetVolumeIcon(volumeIcons, _deviceControl));
+	deviceItem->setIcon(GetVolumeIcon(volumeIcons, _deviceControl));
 }
 
 void DeviceVolumeController::createLineSeperator() {
