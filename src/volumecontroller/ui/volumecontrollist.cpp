@@ -40,6 +40,9 @@ void VolumeControlList::updatePeaks() {
 
 void VolumeControlList::addSession(std::unique_ptr<AudioSession> &&sessionPtr) {
 	auto &session = *sessionPtr;
+	if(session.state().value_or(AudioSession::State::Expired) == AudioSession::State::Expired)
+		return;
+
 	DWORD pid;
 	if(FAILED(session.control().GetProcessId(&pid)))
 		return;
@@ -95,7 +98,7 @@ void VolumeControlList::setShowInactive(bool value) {
 		removeAllItems();
 		for(auto &item : volumeItems) {
 			const auto state = item->control().state();
-			if(state != AudioSessionState::AudioSessionStateInactive)
+			if(state != AudioSession::State::Inactive)
 				continue;
 			item->hide();
 			volumeItemsInactive.push_back(std::move(item));
@@ -142,13 +145,13 @@ void VolumeControlList::createItems() {
 		for(auto &gl : g->groups) {
 			for(auto &sessionControl : gl->members) {
 				const auto state = sessionControl->state();
-				if(state == AudioSessionState::AudioSessionStateExpired)
+				if(state == AudioSession::State::Expired)
 					continue;
 
 				auto item = createItem(*sessionControl, *g);
-				if(state == AudioSessionState::AudioSessionStateActive) {
+				if(state == AudioSession::State::Active) {
 					volumeItems.emplace_back(std::move(item));
-				} else if(state == AudioSessionStateInactive) {
+				} else if(state == AudioSession::State::Inactive) {
 					item->hide();
 					volumeItemsInactive.emplace_back(std::move(item));
 				}
@@ -156,54 +159,45 @@ void VolumeControlList::createItems() {
 		}
 	}
 
+	for(size_t i = 0; i < volumeItems.size(); ++i) {
+		addItem(layout, *volumeItems[i], int(i));
+	}
+
 	sortItems();
-	reinsertAllItems();
 }
 
 void VolumeControlList::addNewItem(std::unique_ptr<SessionVolumeItem> &&item) {
-	const auto state = item->control().state().value_or(AudioSessionState::AudioSessionStateExpired);
-	if(state == AudioSessionState::AudioSessionStateActive) {
+	const auto state = item->control().state().value_or(AudioSession::State::Expired);
+	if(state == AudioSession::State::Active) {
 		insertActiveItem(std::move(item));
-	} else if(state == AudioSessionStateInactive) {
+	} else if(state == AudioSession::State::Inactive) {
 		volumeItemsInactive.emplace_back(std::move(item));
 	}
 }
 
 std::unique_ptr<SessionVolumeItem> VolumeControlList::removeActiveItem(std::vector<std::unique_ptr<SessionVolumeItem>>::iterator it) {
-	removeAllItems();
 	auto item = std::move(*it);
 	qDebug() << "Removing active item" << item->identifier();
+	layout.removeRow(std::distance(volumeItems.begin(), it));
 	volumeItems.erase(it);
-	reinsertAllItems();
 	return item;
 }
 
 void VolumeControlList::insertActiveItem(std::unique_ptr<SessionVolumeItem> &&item) {
-	removeAllItems();
 	qDebug() << "Inserting active item" << item->identifier();
+	addItem(layout, *item, int(volumeItems.size()));
 	volumeItems.emplace_back(std::move(item));
 	sortItems();
-	reinsertAllItems();
 }
 
 void VolumeControlList::sortItems() {
-	std::sort(volumeItems.begin(), volumeItems.end(), [](const SessionVolumeItemPtr &a, const SessionVolumeItemPtr &b) {
-		return a->identifier() < b->identifier();
+	auto perm = CreateSortedPermutation<int>(volumeItems.begin(), volumeItems.end(), sessionVolumeItemPtrComparator);
+	ApplyPermutation(perm.begin(), perm.end(), [&](const size_t a, const size_t b) {
+		std::swap(volumeItems[a], volumeItems[b]);
+		layout.swapRows(int(a), int(b));
 	});
-}
 
-void VolumeControlList::removeAllItems() {
-	for(auto &item : volumeItems) {
-		layout.removeWidget(item->descriptionButton());
-		layout.removeWidget(item->volumeSlider());
-		layout.removeWidget(item->volumeLabel());
-	}
-}
-
-void VolumeControlList::reinsertAllItems() {
-	for(size_t i = 0; i < volumeItems.size(); ++i) {
-		addItem(layout, *volumeItems[i], static_cast<int>(i));
-	}
+	Q_ASSERT(std::is_sorted(volumeItems.begin(), volumeItems.end(), sessionVolumeItemPtrComparator));
 }
 
 void VolumeControlList::onSessionActive(SessionVolumeItem &sessionVolume) {

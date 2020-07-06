@@ -170,10 +170,10 @@ bool AudioSession::setMuted(bool muted) {
 	return SUCCEEDED(volumeControl->SetMute(muted, &eventContext()));
 }
 
-std::optional<AudioSessionState> AudioSession::state() const {
+std::optional<AudioSession::State> AudioSession::state() const {
 	AudioSessionState state;
 	RET_EMPTY(_sessionControl->GetState(&state));
-	return state;
+	return static_cast<AudioSession::State>(state);
 }
 
 bool AudioSession::isSystemSound() const {

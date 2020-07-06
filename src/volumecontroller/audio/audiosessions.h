@@ -79,6 +79,12 @@ private:
 class AudioSession final : public QObject, public IAudioControl {
 	Q_OBJECT
 public:
+	enum class State {
+		Inactive = 0,
+		Active = 1,
+		Expired = 2
+	};
+
 	friend class AudioSessionEvents;
 
 	Q_DISABLE_COPY_MOVE(AudioSession);
@@ -95,7 +101,7 @@ public:
 
 	std::optional<float> peakValue() const override;
 
-	std::optional<AudioSessionState> state() const;
+	std::optional<State> state() const;
 
 	bool isSystemSound() const;
 
