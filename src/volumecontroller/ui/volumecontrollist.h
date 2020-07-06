@@ -6,6 +6,7 @@
 
 #include "volumecontroller/audio/audiosessions.h"
 #include "volumecontroller/ui/volumelistitem.h"
+#include "volumecontroller/ui/gridlayout.h"
 
 #include <array>
 
@@ -23,6 +24,7 @@ public:
 	void addSession(std::unique_ptr<AudioSession> &&ptr);
 
 	static void addItem(QGridLayout &layout, VolumeItemBase &item, int row);
+	static void addItem(GridLayout &layout, VolumeItemBase &item, int row);
 
 	void resizeEvent(QResizeEvent *event) override;
 
@@ -42,15 +44,13 @@ private:
 //	void insertRow(int row, SessionVolumeItem &source);
 //	void fillGap(int row);
 
-	void removeAllItems();
 	void sortItems();
-	void reinsertAllItems();
 
 	void onSessionActive(SessionVolumeItem &sessionVolume);
 	void onSessionInactive(SessionVolumeItem &sessionVolume);
 	void onSessionExpire(SessionVolumeItem &sessionVolume);
 
-	QGridLayout layout;
+	GridLayout layout;
 	AudioSessionGroups &sessionGroups;
 	std::vector<SessionVolumeItemPtr> volumeItems;
 	std::vector<SessionVolumeItemPtr> volumeItemsInactive;

@@ -2,11 +2,21 @@
 #include "volumecontroller/info/processdata.h"
 #include <QDebug>
 
+#include "volumecontroller/collections.h"
+
 static std::vector<std::unique_ptr<SessionVolumeItem>>::iterator FindItem(std::vector<std::unique_ptr<SessionVolumeItem>> &items, const SessionVolumeItem &sessionVolume) {
 	return std::find_if(items.begin(), items.end(), [&](const std::unique_ptr<SessionVolumeItem> &item) {
 		return &sessionVolume == item.get();
 	});
 }
+
+constexpr auto sessionVolumeItemComparator = [](const SessionVolumeItem &a, const SessionVolumeItem &b) {
+	return a.identifier() < b.identifier();
+};
+
+constexpr auto sessionVolumeItemPtrComparator = [](const SessionVolumeItemPtr &a, const SessionVolumeItemPtr &b) {
+	return sessionVolumeItemComparator(*a, *b);
+};
 
 VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessionGroups)
 	: QWidget(parent),
@@ -24,6 +34,9 @@ VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessio
 //	p.setColor(QPalette::Window, QColor(Qt::yellow));
 //	setPalette(p);
 
+	layout.addColumn(GridLayout::ColumnStyle::Fixed);
+	layout.addColumn(GridLayout::ColumnStyle::Fill, 1);
+	layout.addColumn(GridLayout::ColumnStyle::Fixed);
 	layout.setSpacing(12);
 	layout.setSizeConstraint(QLayout::SetDefaultConstraint);
 	layout.setAlignment(Qt::AlignTop);
@@ -60,17 +73,19 @@ void VolumeControlList::addSession(std::unique_ptr<AudioSession> &&sessionPtr) {
 	auto &group = pidGroup.findGroupOrCreate(guid);
 	group.insert(std::move(sessionPtr));
 
-	removeAllItems();
-	auto item = createItem(session, pidGroup);
-	volumeItems.emplace_back(std::move(item));
-	sortItems();
-	reinsertAllItems();
+	addNewItem(createItem(session, pidGroup));
 }
 
 void VolumeControlList::addItem(QGridLayout &layout, VolumeItemBase &item, int row) {
 	layout.addWidget(item.descriptionButton(), row, 0);
 	layout.addWidget(item.volumeSlider(), row, 1);
 	layout.addWidget(item.volumeLabel(), row, 2);
+}
+
+void VolumeControlList::addItem(GridLayout &layout, VolumeItemBase &item, int row) {
+	layout.setWidget(item.descriptionButton(), row, 0);
+	layout.setWidget(item.volumeSlider(), row, 1);
+	layout.setWidget(item.volumeLabel(), row, 2);
 }
 
 void VolumeControlList::resizeEvent(QResizeEvent *) {
@@ -84,31 +99,33 @@ void VolumeControlList::setShowInactive(bool value) {
 	if(_showInactive) {
 		if(volumeItemsInactive.empty())
 			return;
-		removeAllItems();
 
-		for(const auto &item : volumeItemsInactive) {
+		for(auto &item : volumeItemsInactive) {
 			item->show();
+			addItem(layout, *item, int(volumeItems.size()));
+			volumeItems.emplace_back(std::move(item));
 		}
-
-		volumeItems.insert(volumeItems.end(), std::move_iterator(volumeItemsInactive.begin()), std::move_iterator(volumeItemsInactive.end()));
 		volumeItemsInactive.clear();
+
 		sortItems();
-		reinsertAllItems();
 	} else {
-		removeAllItems();
-		for(auto &item : volumeItems) {
+		std::vector<int> deletedRows;
+		for(auto it = volumeItems.begin(); it != volumeItems.end(); ++it) {
+			auto &item = *it;
 			const auto state = item->control().state();
 			if(state != AudioSession::State::Inactive)
 				continue;
 			item->hide();
-			volumeItemsInactive.push_back(std::move(item));
+			deletedRows.emplace_back(int(std::distance(volumeItems.begin(), it)));
+			volumeItemsInactive.emplace_back(std::move(item));
 		}
 
+		layout.removeRows(deletedRows.begin(), deletedRows.end());
 		const auto firstRemoved = std::remove_if(volumeItems.begin(), volumeItems.end(), [](const auto &item) {
 			return !item;
 		});
+		qDebug() << std::distance(firstRemoved, volumeItems.end());
 		volumeItems.erase(firstRemoved, volumeItems.end());
-		reinsertAllItems();
 	}
 }
 

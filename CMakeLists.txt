@@ -43,6 +43,8 @@ add_executable(VolumeController
     src/volumecontroller/audio/audiosessions.cpp
     src/volumecontroller/audio/audiodevicemanager.h
     src/volumecontroller/audio/audiodevicemanager.cpp
+    src/volumecontroller/ui/gridlayout.cpp
+    src/volumecontroller/ui/gridlayout.h
     src/volumecontroller/ui/volumecontrollist.cpp
     src/volumecontroller/ui/volumecontrollist.h
     src/volumecontroller/ui/windowfadeanimation.cpp
@@ -56,6 +58,7 @@ add_executable(VolumeController
     src/volumecontroller/ui/volumecontroller.ui
     src/volumecontroller/ui/volumelistitem.h
     src/volumecontroller/ui/volumelistitem.cpp
+    src/volumecontroller/collections.h
     ${TS_FILES}
 )
 
