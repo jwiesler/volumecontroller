@@ -120,6 +120,8 @@ class DeviceVolumeItem : public VolumeItemBase {
 public:
 	DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons);
 
+	void setVolumeFAndMute(float volume, bool muted);
+
 protected:
 	void volumeChangedEvent(int value) override;
 

@@ -212,6 +212,11 @@ DeviceVolumeItem::DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control,
 	updateIcon(control.volume().value_or(0.0f) * 100.0f);
 }
 
+void DeviceVolumeItem::setVolumeFAndMute(float volume, bool muted) {
+	VolumeItemBase::setVolumeFAndMute(volume, muted);
+	updateIcon(volume * 100.0f);
+}
+
 void DeviceVolumeItem::volumeChangedEvent(const int value) {
 	VolumeItemBase::volumeChangedEvent(value);
 	updateIcon(value);

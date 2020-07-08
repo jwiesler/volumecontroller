@@ -139,7 +139,7 @@ std::optional<AudioSessionGroups> AudioDeviceManager::createSessionGroups()
 	return groups;
 }
 
-std::optional<DeviceAudioControl> AudioDeviceManager::createDeviceControl()
+std::unique_ptr<DeviceAudioControl> AudioDeviceManager::createDeviceControl()
 {
 	auto volumeControl = _device.volume();
 	if(!volumeControl)
@@ -148,7 +148,7 @@ std::optional<DeviceAudioControl> AudioDeviceManager::createDeviceControl()
 	if(!meterInfo)
 		return {};
 
-	return DeviceAudioControl(std::move(volumeControl), std::move(meterInfo));
+	return std::make_unique<DeviceAudioControl>(std::move(volumeControl), std::move(meterInfo));
 }
 
 std::optional<QString> AudioDevice::id() {

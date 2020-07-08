@@ -14,19 +14,86 @@
 
 class AudioSession;
 
-class AudioSessionNotification : public QObject, public IAudioSessionNotification {
-	Q_OBJECT
+template<typename Derived, typename Base>
+class IUnknownBase : public Base {
+	static_assert(std::is_base_of_v<IUnknown, Base>, "Base has to inherit from IUnknown");
+	LONG _refCount;
 
-	LONG _cRef;
+protected:
+	IUnknownBase() : _refCount(1) {}
+
+	Base *basePtr() {
+		return static_cast<Base *>(this);
+	}
+
+	Derived *derivedPtr() {
+		return static_cast<Derived *>(this);
+	}
+
+public:
+	ULONG STDMETHODCALLTYPE AddRef() override {
+		return InterlockedIncrement(&_refCount);
+	}
+
+	ULONG STDMETHODCALLTYPE Release() override {
+		ULONG ulRef = InterlockedDecrement(&_refCount);
+		if (0 == ulRef)
+			delete derivedPtr();
+		return ulRef;
+	}
+
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface) override {
+		if (IID_IUnknown == riid) {
+			AddRef();
+			*ppvInterface = (IUnknown *)basePtr();
+		} else if (__uuidof(Base) == riid) {
+			AddRef();
+			*ppvInterface = (Base *)basePtr();
+		} else {
+			*ppvInterface = nullptr;
+			return E_NOINTERFACE;
+		}
+		return S_OK;
+	}
+};
+
+class AudioSessionEvents final : public IUnknownBase<AudioSessionEvents, IAudioSessionEvents> {
+	AudioSession &session;
+
+	bool isApplicationEvent(LPCGUID context);
+
+public:
+	AudioSessionEvents(AudioSession &session) : session(session) {}
+
+	// Notification methods for audio session events
+
+	HRESULT STDMETHODCALLTYPE OnDisplayNameChanged(LPCWSTR NewDisplayName,
+																  LPCGUID EventContext);
+
+	HRESULT STDMETHODCALLTYPE OnIconPathChanged(LPCWSTR NewIconPath,
+															  LPCGUID EventContext);
+
+	HRESULT STDMETHODCALLTYPE OnSimpleVolumeChanged(float NewVolume, BOOL NewMute,
+																	LPCGUID EventContext);
+
+	HRESULT STDMETHODCALLTYPE
+	OnChannelVolumeChanged(DWORD ChannelCount, float NewChannelVolumeArray[],
+								  DWORD ChangedChannel, LPCGUID EventContext);
+
+	HRESULT STDMETHODCALLTYPE OnGroupingParamChanged(LPCGUID NewGroupingParam,
+																	 LPCGUID EventContext);
+
+	HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState NewState);
+
+	HRESULT STDMETHODCALLTYPE
+	OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason);
+};
+
+class AudioSessionNotification final : public QObject, public IUnknownBase<AudioSessionNotification, IAudioSessionNotification> {
+	Q_OBJECT
 
 public:
 	AudioSessionNotification(QObject *parent);
-
-	ULONG STDMETHODCALLTYPE AddRef() override;
-
-	ULONG STDMETHODCALLTYPE Release() override;
-
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface) override;
 
 	HRESULT STDMETHODCALLTYPE OnSessionCreated(IAudioSessionControl *NewSession) override;
 
@@ -50,15 +117,15 @@ public:
 	virtual std::optional<float> peakValue() const = 0;
 };
 
-class DeviceAudioControl final : public IAudioControl {
+class DeviceAudioControl final : public QObject, public IAudioControl {
+	Q_OBJECT
+
 public:
-	Q_DISABLE_COPY(DeviceAudioControl);
+	friend class DeviceAudioEvents;
 
-	DeviceAudioControl(DeviceAudioControl &&) = default;
-	DeviceAudioControl &operator=(DeviceAudioControl &&) = default;
-
-	DeviceAudioControl() = default;
 	DeviceAudioControl(ComPtr<IAudioEndpointVolume> &&vol, ComPtr<IAudioMeterInformation> &&audioMeterInfo);
+
+	~DeviceAudioControl();
 
 	std::optional<float> volume() const override;
 	bool setVolume(float v) override;
@@ -68,12 +135,33 @@ public:
 
 	std::optional<float> peakValue() const override;
 
+	const GUID &eventContext() const { return _eventContext; }
+
 private:
+	void onVolumeChangedEvent(float volume, bool muted);
+
+signals:
+	void volumeChanged(float volume, bool muted);
+
+private:
+	const GUID _eventContext;
 	ComPtr<IAudioEndpointVolume> volumeControl;
 	ComPtr<IAudioMeterInformation> audioMeterInfo;
+	ComPtr<DeviceAudioEvents> volumeEvents;
 	float volumeMindB;
 	float volumeMaxdB;
 	float volumeIncrementdB;
+};
+
+class DeviceAudioEvents final : public IUnknownBase<DeviceAudioEvents, IAudioEndpointVolumeCallback > {
+	DeviceAudioControl &session;
+
+	bool isApplicationEvent(LPCGUID context);
+
+public:
+	DeviceAudioEvents(DeviceAudioControl &session) : session(session) {}
+
+	HRESULT STDMETHODCALLTYPE OnNotify(AUDIO_VOLUME_NOTIFICATION_DATA *pNotify) override;
 };
 
 class AudioSession final : public QObject, public IAudioControl {

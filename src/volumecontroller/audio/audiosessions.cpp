@@ -3,133 +3,6 @@
 #include <algorithm>
 #include <QDebug>
 
-class AudioSessionEvents : public IAudioSessionEvents {
-	LONG _cRef;
-	AudioSession &session;
-
-	bool isApplicationEvent(LPCGUID context) {
-		return context != nullptr && *context == session.eventContext();
-	}
-
-public:
-	AudioSessionEvents(AudioSession &session) : _cRef(1), session(session) {}
-
-	~AudioSessionEvents() {}
-
-	// IUnknown methods -- AddRef, Release, and QueryInterface
-
-	ULONG STDMETHODCALLTYPE AddRef() { return InterlockedIncrement(&_cRef); }
-
-	ULONG STDMETHODCALLTYPE Release() {
-		ULONG ulRef = InterlockedDecrement(&_cRef);
-		if (0 == ulRef)
-			delete this;
-		return ulRef;
-	}
-
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface) {
-		if (IID_IUnknown == riid) {
-			AddRef();
-			*ppvInterface = (IUnknown *)this;
-		} else if (__uuidof(IAudioSessionEvents) == riid) {
-			AddRef();
-			*ppvInterface = (IAudioSessionEvents *)this;
-		} else {
-			*ppvInterface = NULL;
-			return E_NOINTERFACE;
-		}
-		return S_OK;
-	}
-
-	// Notification methods for audio session events
-
-	HRESULT STDMETHODCALLTYPE OnDisplayNameChanged(LPCWSTR NewDisplayName,
-																  LPCGUID EventContext) {
-		if(isApplicationEvent(EventContext))
-			return S_OK;
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE OnIconPathChanged(LPCWSTR NewIconPath,
-															  LPCGUID EventContext) {
-		if(isApplicationEvent(EventContext))
-			return S_OK;
-
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE OnSimpleVolumeChanged(float NewVolume, BOOL NewMute,
-																	LPCGUID EventContext) {
-		if(isApplicationEvent(EventContext))
-			return S_OK;
-		if (NewMute) {
-			printf("MUTE\n");
-		} else {
-			printf("Volume = %d percent\n", (UINT32)(100 * NewVolume + 0.5));
-		}
-
-		session.onVolumeChangedEvent(NewVolume, NewMute);
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE
-	OnChannelVolumeChanged(DWORD ChannelCount, float NewChannelVolumeArray[],
-								  DWORD ChangedChannel, LPCGUID EventContext) {
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE OnGroupingParamChanged(LPCGUID NewGroupingParam,
-																	 LPCGUID EventContext) {
-		if(isApplicationEvent(EventContext))
-			return S_OK;
-		session.onGroupingParamChangedEvent(NewGroupingParam);
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState NewState) {
-		switch (NewState) {
-		case AudioSessionStateActive:
-			break;
-		case AudioSessionStateInactive:
-			break;
-		case AudioSessionStateExpired:
-			break;
-		}
-
-		session.onStateChangedEvent(NewState);
-		return S_OK;
-	}
-
-	HRESULT STDMETHODCALLTYPE
-	OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason) {
-		auto pszReason = "?????";
-
-		switch (DisconnectReason) {
-		case DisconnectReasonDeviceRemoval:
-			pszReason = "device removed";
-			break;
-		case DisconnectReasonServerShutdown:
-			pszReason = "server shut down";
-			break;
-		case DisconnectReasonFormatChanged:
-			pszReason = "format changed";
-			break;
-		case DisconnectReasonSessionLogoff:
-			pszReason = "user logged off";
-			break;
-		case DisconnectReasonSessionDisconnected:
-			pszReason = "session disconnected";
-			break;
-		case DisconnectReasonExclusiveModeOverride:
-			pszReason = "exclusive-mode override";
-			break;
-		}
-		qDebug() << QString("Audio session disconnected :") << QString(pszReason);
-
-		return S_OK;
-	}
-};
-
 GUID CreateGuid() {
 	GUID guid;
 	CoCreateGuid(&guid);
@@ -269,8 +142,16 @@ void AudioSessionGroups::insert(std::unique_ptr<AudioSession> &&session, DWORD p
 }
 
 DeviceAudioControl::DeviceAudioControl(ComPtr<IAudioEndpointVolume> &&vol, ComPtr<IAudioMeterInformation> &&audioMeterInfo)
-	: volumeControl(std::move(vol)),
-	  audioMeterInfo(std::move(audioMeterInfo)) {}
+	: _eventContext(CreateGuid()),
+	  volumeControl(std::move(vol)),
+	  audioMeterInfo(std::move(audioMeterInfo)),
+	  volumeEvents(new DeviceAudioEvents(*this)) {
+	volumeControl->RegisterControlChangeNotify(volumeEvents.get());
+}
+
+DeviceAudioControl::~DeviceAudioControl() {
+	volumeControl->UnregisterControlChangeNotify(volumeEvents.get());
+}
 
 std::optional<float> DeviceAudioControl::volume() const
 {
@@ -281,7 +162,7 @@ std::optional<float> DeviceAudioControl::volume() const
 
 bool DeviceAudioControl::setVolume(float v)
 {
-	return SUCCEEDED(volumeControl->SetMasterVolumeLevelScalar(v, nullptr));
+	return SUCCEEDED(volumeControl->SetMasterVolumeLevelScalar(v, &eventContext()));
 }
 
 std::optional<bool> DeviceAudioControl::muted() const
@@ -293,7 +174,7 @@ std::optional<bool> DeviceAudioControl::muted() const
 
 bool DeviceAudioControl::setMuted(bool muted)
 {
-	return SUCCEEDED(volumeControl->SetMute(muted, nullptr));
+	return SUCCEEDED(volumeControl->SetMute(muted, &eventContext()));
 }
 
 std::optional<float> DeviceAudioControl::peakValue() const
@@ -303,35 +184,105 @@ std::optional<float> DeviceAudioControl::peakValue() const
 	return peak;
 }
 
+void DeviceAudioControl::onVolumeChangedEvent(float volume, bool muted) {
+	emit volumeChanged(volume, muted);
+}
+
 AudioSessionNotification::AudioSessionNotification(QObject *parent) : QObject(parent) {}
-
-ULONG AudioSessionNotification::AddRef() { return InterlockedIncrement(&_cRef); }
-
-ULONG AudioSessionNotification::Release() {
-	ULONG ulRef = InterlockedDecrement(&_cRef);
-	if (0 == ulRef)
-		delete this;
-	return ulRef;
-}
-
-HRESULT AudioSessionNotification::QueryInterface(const IID &riid, void **ppvInterface) {
-	if (IID_IUnknown == riid) {
-		AddRef();
-		*ppvInterface = static_cast<IUnknown *>(this);
-	} else if (__uuidof(IAudioSessionNotification) == riid) {
-		AddRef();
-		*ppvInterface = static_cast<IAudioSessionNotification *>(this);
-	} else {
-		*ppvInterface = NULL;
-		return E_NOINTERFACE;
-	}
-	return S_OK;
-}
 
 #include "audiodevicemanager.h"
 
 HRESULT AudioSessionNotification::OnSessionCreated(IAudioSessionControl *NewSession) {
 	auto session = CreateSession(NewSession);
 	emit sessionCreated(session.release());
+	return S_OK;
+}
+
+bool AudioSessionEvents::isApplicationEvent(LPCGUID context) {
+	return context != nullptr && *context == session.eventContext();
+}
+
+HRESULT AudioSessionEvents::OnDisplayNameChanged(LPCWSTR NewDisplayName, LPCGUID EventContext) {
+	if(isApplicationEvent(EventContext))
+		return S_OK;
+	return S_OK;
+}
+
+HRESULT AudioSessionEvents::OnIconPathChanged(LPCWSTR NewIconPath, LPCGUID EventContext) {
+	if(isApplicationEvent(EventContext))
+		return S_OK;
+
+	return S_OK;
+}
+
+HRESULT AudioSessionEvents::OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext) {
+	if(isApplicationEvent(EventContext))
+		return S_OK;
+	if (NewMute) {
+		printf("MUTE\n");
+	} else {
+		printf("Volume = %d percent\n", (UINT32)(100 * NewVolume + 0.5));
+	}
+
+	session.onVolumeChangedEvent(NewVolume, NewMute);
+	return S_OK;
+}
+
+HRESULT AudioSessionEvents::OnChannelVolumeChanged(DWORD ChannelCount, float NewChannelVolumeArray[], DWORD ChangedChannel, LPCGUID EventContext) {
+	return S_OK;
+}
+
+HRESULT AudioSessionEvents::OnGroupingParamChanged(LPCGUID NewGroupingParam, LPCGUID EventContext) {
+	if(isApplicationEvent(EventContext))
+		return S_OK;
+	session.onGroupingParamChangedEvent(NewGroupingParam);
+	return S_OK;
+}
+
+HRESULT AudioSessionEvents::OnStateChanged(AudioSessionState NewState) {
+	switch (NewState) {
+	case AudioSessionStateActive:
+		break;
+	case AudioSessionStateInactive:
+		break;
+	case AudioSessionStateExpired:
+		break;
+	}
+
+	session.onStateChangedEvent(NewState);
+	return S_OK;
+}
+
+HRESULT AudioSessionEvents::OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason) {
+	auto pszReason = "?????";
+
+	switch (DisconnectReason) {
+	case DisconnectReasonDeviceRemoval:
+		pszReason = "device removed";
+		break;
+	case DisconnectReasonServerShutdown:
+		pszReason = "server shut down";
+		break;
+	case DisconnectReasonFormatChanged:
+		pszReason = "format changed";
+		break;
+	case DisconnectReasonSessionLogoff:
+		pszReason = "user logged off";
+		break;
+	case DisconnectReasonSessionDisconnected:
+		pszReason = "session disconnected";
+		break;
+	case DisconnectReasonExclusiveModeOverride:
+		pszReason = "exclusive-mode override";
+		break;
+	}
+	qDebug() << QString("Audio session disconnected :") << QString(pszReason);
+
+	return S_OK;
+}
+
+HRESULT DeviceAudioEvents::OnNotify(AUDIO_VOLUME_NOTIFICATION_DATA *pNotify) {
+	if(pNotify->guidEventContext != session.eventContext())
+		session.onVolumeChangedEvent(pNotify->fMasterVolume, pNotify->bMuted);
 	return S_OK;
 }

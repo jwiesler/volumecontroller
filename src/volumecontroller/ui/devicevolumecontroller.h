@@ -15,9 +15,11 @@ public:
 	DeviceVolumeController(QWidget *parent, AudioDeviceManager &&m);
 	~DeviceVolumeController();
 
-	const DeviceAudioControl &deviceControl() const { return _deviceControl; }
-	const DeviceVolumeItem &deviceVolumeItem() const { return *deviceItem; }
+	DeviceAudioControl &deviceControl() { return *_deviceControl; }
+	const DeviceAudioControl &deviceControl() const { return *_deviceControl; }
+
 	DeviceVolumeItem &deviceVolumeItem() { return *deviceItem; }
+	const DeviceVolumeItem &deviceVolumeItem() const { return *deviceItem; }
 
 	void resizeEvent(QResizeEvent *event) override;
 
@@ -35,7 +37,7 @@ private:
 	ComPtr<AudioSessionNotification> audioSessionNotification;
 	VolumeControlList *_controlList = nullptr;
 
-	DeviceAudioControl _deviceControl;
+	std::unique_ptr<DeviceAudioControl> _deviceControl;
 	std::unique_ptr<DeviceVolumeItem> deviceItem;
 
 	QGridLayout gridLayout;

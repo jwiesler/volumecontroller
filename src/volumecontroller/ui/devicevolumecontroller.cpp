@@ -25,9 +25,9 @@ DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManag
 	gridLayout.setContentsMargins(12, 12, 12, 12);
 	gridLayout.setAlignment(Qt::AlignTop);
 
-	auto optDeviceControl = manager.createDeviceControl();
-	Q_ASSERT(optDeviceControl.has_value());
-	_deviceControl = std::move(*optDeviceControl);
+	auto deviceControlPtr = manager.createDeviceControl();
+	Q_ASSERT(deviceControlPtr);
+	_deviceControl = std::move(deviceControlPtr);
 
 	auto optSessionGroups = manager.createSessionGroups();
 	Q_ASSERT(optSessionGroups.has_value());
@@ -75,8 +75,8 @@ static const QIcon &GetVolumeIcon(const VolumeIcons &volumeIcons, const IAudioCo
 }
 
 void DeviceVolumeController::createDeviceItem() {
-	deviceItem = std::make_unique<DeviceVolumeItem>(this, _deviceControl, volumeIcons);
-	deviceItem->setIcon(GetVolumeIcon(volumeIcons, _deviceControl));
+	deviceItem = std::make_unique<DeviceVolumeItem>(this, deviceControl(), volumeIcons);
+	connect(&deviceControl(), &DeviceAudioControl::volumeChanged, deviceItem.get(), &DeviceVolumeItem::setVolumeFAndMute, Qt::ConnectionType::QueuedConnection);
 }
 
 void DeviceVolumeController::createLineSeperator() {

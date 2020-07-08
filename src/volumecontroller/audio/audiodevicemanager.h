@@ -47,7 +47,7 @@ public:
 
 	std::optional<AudioSessionGroups> createSessionGroups();
 
-	std::optional<DeviceAudioControl> createDeviceControl();
+	std::unique_ptr<DeviceAudioControl> createDeviceControl();
 
 	AudioDevice &device() { return _device; }
 
