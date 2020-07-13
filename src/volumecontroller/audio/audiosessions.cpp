@@ -76,34 +76,34 @@ std::optional<float> AudioSession::peakValue() const
 }
 
 void AudioSessionGroup::insert(std::unique_ptr<AudioSession> &&session) {
-	members.emplace_back(std::move(session));
+	members().emplace_back(std::move(session));
 }
 
 std::optional<float> AudioSessionGroup::volume() const {
-	return members.empty() ? std::optional<float>(1.0f) : members.front()->volume();
+	return members().empty() ? std::optional<float>(1.0f) : members().front()->volume();
 }
 
 bool AudioSessionGroup::setVolume(float v) {
-	return std::find_if_not(members.begin(), members.end(), [=](std::unique_ptr<AudioSession> &member) {
+	return std::find_if_not(members().begin(), members().end(), [=](std::unique_ptr<AudioSession> &member) {
 		return member->setVolume(v);
-	}) == members.end();
+	}) == members().end();
 }
 
 bool AudioSessionGroup::isSystemSound() const {
-	return std::any_of(members.begin(), members.end(), [](const std::unique_ptr<AudioSession> &session){
+	return std::any_of(members().begin(), members().end(), [](const std::unique_ptr<AudioSession> &session){
 		return session->isSystemSound();
 	});
 }
 
 std::vector<std::unique_ptr<AudioSessionGroup>>::iterator AudioSessionPidGroup::findGroup(const GUID &guid) {
-	return std::find_if(groups.begin(), groups.end(), [&](const std::unique_ptr<AudioSessionGroup> &g) {
-		return guid == g->groupingGuid;
+	return std::find_if(groups().begin(), groups().end(), [&](const std::unique_ptr<AudioSessionGroup> &g) {
+		return guid == g->groupingGuid();
 	});
 }
 
 AudioSessionGroup &AudioSessionPidGroup::findGroupOrCreate(const GUID &guid) {
 	auto it = findGroup(guid);
-	return it == groups.end() ? *groups.emplace_back(std::make_unique<AudioSessionGroup>(guid)) : **it;
+	return it == groups().end() ? *groups().emplace_back(std::make_unique<AudioSessionGroup>(guid)) : **it;
 }
 
 void AudioSessionPidGroup::insert(std::unique_ptr<AudioSession> &&session, const GUID &guid) {
@@ -112,28 +112,28 @@ void AudioSessionPidGroup::insert(std::unique_ptr<AudioSession> &&session, const
 }
 
 std::optional<float> AudioSessionPidGroup::volume() const {
-	return groups.empty() ? std::optional<float>(1.0f) : groups.front()->volume();
+	return groups().empty() ? std::optional<float>(1.0f) : groups().front()->volume();
 }
 
 bool AudioSessionPidGroup::setVolume(float v) {
-	return std::find_if_not(groups.begin(), groups.end(), [=](std::unique_ptr<AudioSessionGroup> &group) {
+	return std::find_if_not(groups().begin(), groups().end(), [=](std::unique_ptr<AudioSessionGroup> &group) {
 		return group->setVolume(v);
-	}) == groups.end();
+	}) == groups().end();
 }
 
 bool AudioSessionPidGroup::isSystemSound() const {
-	return std::any_of(groups.begin(), groups.end(), [](const std::unique_ptr<AudioSessionGroup> &group){ return group->isSystemSound(); });
+	return std::any_of(groups().begin(), groups().end(), [](const std::unique_ptr<AudioSessionGroup> &group){ return group->isSystemSound(); });
 }
 
 std::vector<std::unique_ptr<AudioSessionPidGroup>>::iterator AudioSessionGroups::findPidGroup(DWORD pid) {
-	return std::find_if(groups.begin(), groups.end(), [&](const std::unique_ptr<AudioSessionPidGroup> &g) {
-		return pid == g->pid;
+	return std::find_if(groups().begin(), groups().end(), [&](const std::unique_ptr<AudioSessionPidGroup> &g) {
+		return pid == g->pid();
 	});
 }
 
 AudioSessionPidGroup &AudioSessionGroups::findPidGroupOrCreate(DWORD pid) {
 	auto it = findPidGroup(pid);
-	return it == groups.end() ? *groups.emplace_back(std::make_unique<AudioSessionPidGroup>(pid)) : **it;
+	return it == groups().end() ? *groups().emplace_back(std::make_unique<AudioSessionPidGroup>(pid)) : **it;
 }
 
 void AudioSessionGroups::insert(std::unique_ptr<AudioSession> &&session, DWORD pid, const GUID &guid) {

@@ -64,7 +64,8 @@ void VolumeControlList::addSession(std::unique_ptr<AudioSession> &&sessionPtr) {
 	auto cy = 32 * logicalDpiY() / 96.0;
 
 	auto &pidGroup = sessionGroups.findPidGroupOrCreate(pid);
-	pidGroup.info = ProgrammInformation::forProcess(pidGroup.pid, pidGroup.isSystemSound(), QSize(cx, cy));
+	if(!pidGroup.infoPtr())
+		pidGroup.setInfoPtr(ProgrammInformation::forProcess(pidGroup.pid(), pidGroup.isSystemSound(), QSize(cx, cy)));
 
 	GUID guid;
 	if(FAILED(session.control().GetGroupingParam(&guid)))
@@ -132,8 +133,8 @@ void VolumeControlList::setShowInactive(bool value) {
 std::unique_ptr<SessionVolumeItem> VolumeControlList::createItem(AudioSession &sessionControl, const AudioSessionPidGroup &group) {
 	std::unique_ptr<SessionVolumeItem> item = std::make_unique<SessionVolumeItem>(this, sessionControl);
 
-	Q_ASSERT(group.info);
-	item->setInfo(group.info->icon(), group.info->title());
+	Q_ASSERT(group.infoPtr());
+	item->setInfo(group.infoPtr()->icon(), group.infoPtr()->title());
 
 	connect(&sessionControl, &AudioSession::volumeChanged, item.get(), &SessionVolumeItem::setVolumeFAndMute, Qt::ConnectionType::QueuedConnection);
 	connect(&sessionControl, &AudioSession::stateChanged, item.get(), [this, &control = *item](int state) {
@@ -146,7 +147,7 @@ std::unique_ptr<SessionVolumeItem> VolumeControlList::createItem(AudioSession &s
 			onSessionExpire(control);
 	}, Qt::ConnectionType::QueuedConnection);
 
-	qDebug() << "Created" << item->identifier() << "pid" << group.pid;
+	qDebug() << "Created session" << item->identifier() << "pid" << group.pid();
 	return item;
 }
 
@@ -154,13 +155,13 @@ void VolumeControlList::createItems() {
 	auto cx = 32 * logicalDpiX() / 96.0;
 	auto cy = 32 * logicalDpiY() / 96.0;
 
-	std::for_each(sessionGroups.groups.begin(), sessionGroups.groups.end(), [&](std::unique_ptr<AudioSessionPidGroup> &g) {
-		g->info = ProgrammInformation::forProcess(g->pid, g->isSystemSound(), QSize(cx, cy));
+	std::for_each(sessionGroups.groups().begin(), sessionGroups.groups().end(), [&](std::unique_ptr<AudioSessionPidGroup> &g) {
+		g->setInfoPtr(ProgrammInformation::forProcess(g->pid(), g->isSystemSound(), QSize(cx, cy)));
 	});
 
-	for(auto &g : sessionGroups.groups) {
-		for(auto &gl : g->groups) {
-			for(auto &sessionControl : gl->members) {
+	for(auto &g : sessionGroups.groups()) {
+		for(auto &gl : g->groups()) {
+			for(auto &sessionControl : gl->members()) {
 				const auto state = sessionControl->state();
 				if(state == AudioSession::State::Expired)
 					continue;
