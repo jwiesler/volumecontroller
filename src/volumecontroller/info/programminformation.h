@@ -11,8 +11,8 @@ public:
 
 	static std::unique_ptr<ProgrammInformation> forProcess(unsigned long pid, bool isSystemSound, QSize imgSize);
 
-	const QString &title() { return _title; }
-	const std::optional<QIcon> &icon() { return _icon; }
+	const QString &title() const { return _title; }
+	const std::optional<QIcon> &icon() const { return _icon; }
 
 private:
 	QString _title;

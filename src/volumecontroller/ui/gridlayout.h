@@ -2,6 +2,7 @@
 #define GRIDLAYOUT_H
 
 #include <QLayout>
+#include "volumecontroller/collections.h"
 
 class GridLayout : public QLayout {
 public:
@@ -40,14 +41,19 @@ public:
 	void addColumn(ColumnStyle style, int weight = 0);
 	void removeColumn(int index);
 
-	void addRow();
+	// void addRow();
 	void insertRow(int index);
 
 	// begin, end have to be sorted
 	template<typename Iterator>
 	void removeRows(const Iterator begin, const Iterator end) {
-		removeIndices(rows.begin(), rows.end(), begin, end);
-		rows.erase(rows.end() - std::distance(begin, end), rows.end());
+		const auto it = RemoveIndices(rows.begin(), rows.end(), begin, end);
+		rows.erase(it, rows.end());
+	}
+
+	template<typename Collection>
+	void removeRows(const Collection &collection) {
+		removeRows(std::begin(collection), std::end(collection));
 	}
 
 	void removeRow(int index);
@@ -60,7 +66,7 @@ public:
 	int rowCount() const;
 	int columnCount() const;
 
-	void addItem(QLayoutItem *);
+	void addItem(QLayoutItem *) override;
 	void setWidget(QWidget *widget, int row, int column);
 
 	int count() const override;

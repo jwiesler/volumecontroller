@@ -2,6 +2,8 @@
 
 #include <QDebug>
 
+#include <volumecontroller/joiner.h>
+
 GridLayout::GridLayout(QWidget *parent) : QLayout(parent) {}
 
 void GridLayout::addColumn(GridLayout::ColumnStyle style, int weight) {
@@ -166,25 +168,31 @@ Qt::Orientations GridLayout::expandingDirections() const {
 }
 
 void GridLayout::setGeometry(const QRect &rect) {
-//	qDebug() << "setGeometry";
+	qDebug() << "Setting geometry to" << rect;
 	for(auto &column : columns) {
 		column.width = 0;
 	}
 
-	for(auto &row : rows) {
+	for(auto it = rows.begin(); it != rows.end(); ++it) {
+		auto &row = *it;
 		row.height = 0;
-		for(int i = 0; i < columnCount(); ++i) {
-			const auto &itemPtr = row.items[i];
-			if(!itemPtr)
-				continue;
+		auto debug = qDebug();
+		debug << "Row" << std::distance(rows.begin(), it) << "with width" << row.items.size();
+
+		ForeachTied([&](std::unique_ptr<QLayoutItem> &itemPtr, ColumnInfo &column) {
+			if(!itemPtr) {
+				debug << QSize(0, 0);
+				return;
+			}
 
 			auto &item = *itemPtr;
 			const QSize value = item.sizeHint();
+			debug << value;
 
-			auto &column = columns[i];
 			column.width = std::max(column.width, value.width());
 			row.height = std::max(row.height, value.height());
-		}
+		}, row.items, columns);
+		debug << "final height" << row.height;
 	}
 
 	int totalWidth = 0;
@@ -207,9 +215,9 @@ void GridLayout::setGeometry(const QRect &rect) {
 		column.width += addW;
 	}
 
-//	for(int i = 0; i < columnCount(); ++i) {
-//		qDebug() << "column" << i << "width" << columns[i].width;
-//	}
+	qDebug().nospace().noquote() << "column widths: " << Joiner(columns, ' ', [](auto &str, const auto &column) {
+		str << column.width;
+	});
 
 	int y = rect.y();
 	for(size_t j = 0; j < rows.size(); ++j) {

@@ -59,6 +59,7 @@ add_executable(VolumeController
     src/volumecontroller/ui/volumelistitem.h
     src/volumecontroller/ui/volumelistitem.cpp
     src/volumecontroller/collections.h
+    src/volumecontroller/joiner.h
     ${TS_FILES}
 )
 

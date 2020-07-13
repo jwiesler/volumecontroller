@@ -3,6 +3,7 @@
 #include <QDebug>
 
 #include "volumecontroller/collections.h"
+#include <volumecontroller/joiner.h>
 
 static std::vector<std::unique_ptr<SessionVolumeItem>>::iterator FindItem(std::vector<std::unique_ptr<SessionVolumeItem>> &items, const SessionVolumeItem &sessionVolume) {
 	return std::find_if(items.begin(), items.end(), [&](const std::unique_ptr<SessionVolumeItem> &item) {
@@ -60,6 +61,8 @@ void VolumeControlList::addSession(std::unique_ptr<AudioSession> &&sessionPtr) {
 	if(FAILED(session.control().GetProcessId(&pid)))
 		return;
 
+	qDebug().nospace() << "Found session for pid " << pid << ".";
+
 	auto cx = 32 * logicalDpiX() / 96.0;
 	auto cy = 32 * logicalDpiY() / 96.0;
 
@@ -84,20 +87,19 @@ void VolumeControlList::addItem(QGridLayout &layout, VolumeItemBase &item, int r
 }
 
 void VolumeControlList::addItem(GridLayout &layout, VolumeItemBase &item, int row) {
+	qDebug() << "Inserting" << item.identifier() << "into row" << row;
 	layout.setWidget(item.descriptionButton(), row, 0);
 	layout.setWidget(item.volumeSlider(), row, 1);
 	layout.setWidget(item.volumeLabel(), row, 2);
-}
-
-void VolumeControlList::resizeEvent(QResizeEvent *) {
-//	qDebug() << "Resize VolumeControlList";
 }
 
 void VolumeControlList::setShowInactive(bool value) {
 	if(value == _showInactive)
 		return;
 	_showInactive = value;
+	qDebug().nospace() << "Show inactive changed to " << _showInactive << ".";
 	if(_showInactive) {
+		qDebug().nospace() << "Showing " << volumeItemsInactive.size() << " hidden inactive items";
 		if(volumeItemsInactive.empty())
 			return;
 
@@ -120,13 +122,14 @@ void VolumeControlList::setShowInactive(bool value) {
 			deletedRows.emplace_back(int(std::distance(volumeItems.begin(), it)));
 			volumeItemsInactive.emplace_back(std::move(item));
 		}
-
-		layout.removeRows(deletedRows.begin(), deletedRows.end());
-		const auto firstRemoved = std::remove_if(volumeItems.begin(), volumeItems.end(), [](const auto &item) {
-			return !item;
+		qDebug().nospace() << "Hiding inactive items " << Joiner(deletedRows, ", ", [](auto &str, const auto &value) {
+			str << value;
 		});
-		qDebug() << std::distance(firstRemoved, volumeItems.end());
-		volumeItems.erase(firstRemoved, volumeItems.end());
+
+		layout.removeRows(deletedRows);
+
+		const auto it = RemoveIndices(volumeItems.begin(), volumeItems.end(), deletedRows.cbegin(), deletedRows.cend());
+		volumeItems.erase(it, volumeItems.end());
 	}
 }
 
@@ -186,6 +189,7 @@ void VolumeControlList::createItems() {
 
 void VolumeControlList::addNewItem(std::unique_ptr<SessionVolumeItem> &&item) {
 	const auto state = item->control().state().value_or(AudioSession::State::Expired);
+	qDebug() << "Item" << item->identifier() << "is" << ToString(state);
 	if(state == AudioSession::State::Active) {
 		insertActiveItem(std::move(item));
 	} else if(state == AudioSession::State::Inactive) {
@@ -209,6 +213,7 @@ void VolumeControlList::insertActiveItem(std::unique_ptr<SessionVolumeItem> &&it
 }
 
 void VolumeControlList::sortItems() {
+	Q_ASSERT(int(volumeItems.size()) == layout.rowCount());
 	auto perm = CreateSortedPermutation<int>(volumeItems.begin(), volumeItems.end(), sessionVolumeItemPtrComparator);
 	ApplyPermutation(perm.begin(), perm.end(), [&](const size_t a, const size_t b) {
 		std::swap(volumeItems[a], volumeItems[b]);
@@ -216,6 +221,10 @@ void VolumeControlList::sortItems() {
 	});
 
 	Q_ASSERT(std::is_sorted(volumeItems.begin(), volumeItems.end(), sessionVolumeItemPtrComparator));
+	Q_ASSERT(int(volumeItems.size()) == layout.rowCount());
+	qDebug().noquote() << "Sorted items are:" << Join(volumeItems, ", ", [](auto &str, const auto &item) {
+		str << item->identifier();
+	});
 }
 
 void VolumeControlList::onSessionActive(SessionVolumeItem &sessionVolume) {

@@ -1,6 +1,8 @@
 #include "programminformation.h"
 
 #include <QString>
+#include <QDebug>
+
 #include "processdata.h"
 
 ProgrammInformation::ProgrammInformation(QString title, std::optional<QIcon> icon) : _title(std::move(title)), _icon(std::move(icon)) {}
@@ -21,6 +23,8 @@ std::unique_ptr<ProgrammInformation> ProgrammInformation::forProcess(const unsig
 	}
 
 	auto optImg = ProcessData::GetProcessImage(pid, imgSize.width(), imgSize.height());
+
+	qDebug() << "ProgrammInformation for pid" << pid << "has title" << title << "and an icon:" << optImg.has_value();
 	if(!optImg.has_value())
 		return std::make_unique<ProgrammInformation>(title, std::optional<QPixmap>());
 

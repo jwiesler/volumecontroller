@@ -26,8 +26,6 @@ public:
 	static void addItem(QGridLayout &layout, VolumeItemBase &item, int row);
 	static void addItem(GridLayout &layout, VolumeItemBase &item, int row);
 
-	void resizeEvent(QResizeEvent *event) override;
-
 	bool showInactive() const { return _showInactive; }
 
 	void setShowInactive(bool value);

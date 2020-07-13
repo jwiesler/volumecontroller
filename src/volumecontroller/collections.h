@@ -34,23 +34,25 @@ void ApplyPermutation(PermutationIterator pBegin, PermutationIterator pEnd, Swap
 }
 
 template<typename Iterator, typename IndexIterator>
-void removeIndices(const Iterator begin, const Iterator end, const IndexIterator ibegin, const IndexIterator iend) {
+Iterator RemoveIndices(const Iterator begin, const Iterator end, const IndexIterator ibegin, const IndexIterator iend) {
 	using Index = typename std::iterator_traits<IndexIterator>::value_type;
+	_Adl_verify_range(begin, end);
+	_Adl_verify_range(ibegin, iend);
 
 	if(ibegin == iend)
-		return;
+		return end;
 
 	const Index count = std::distance(begin, end);
 	Iterator it = begin + *ibegin;
 	for (IndexIterator iit = ibegin; iit < iend; iit++) {
-		const Index next = (iit + 1 == iend ? count : *(iit + 1));
-		const Index valueCount = next - *iit;
+		const Index next = (std::next(iit) == iend ? count : *std::next(iit));
 		const Iterator moveBegin = begin + *iit + 1;
 		const Iterator moveEnd = begin + next;
 
-		std::move(moveBegin, moveEnd, it);
-		it += valueCount;
+		it = std::move(moveBegin, moveEnd, it);
 	}
+
+	return it;
 }
 
 template<typename Iterator, typename PermutationIterator>
@@ -67,6 +69,28 @@ void Permutate(Iterator begin, Iterator end, PermutationIterator pbegin, Permuta
 			std::iter_swap(pit, pbegin + offset);
 		}
 	}
+}
+
+template<typename Tuple, typename Function, size_t ... Indices>
+void ForeachTiedInternal(Tuple &&begins, Tuple &&ends, Function && f, std::index_sequence<Indices...>) {
+	const auto end = std::get<0>(ends);
+	const auto dist = std::distance(std::get<0>(begins), end);
+	Q_ASSERT((std::distance(std::get<Indices>(begins), std::get<Indices>(ends)) && ...));
+	std::remove_reference_t<std::remove_const_t<Tuple>> iterators = begins;
+	for(; std::get<0>(iterators) != end; (++std::get<Indices>(iterators), ...)) {
+		std::apply([&](auto &&... iterators) {
+			f(*iterators...);
+		}, iterators);
+	}
+}
+
+template<typename Function, typename... Ranges>
+void ForeachTied(Function && f, Ranges &&... ranges) {
+	static_assert(sizeof...(Ranges) > 0);
+	using std::begin;
+	using std::end;
+	ForeachTiedInternal(std::make_tuple(begin(ranges)...), std::make_tuple(end(ranges)...), std::forward<Function>(f),
+							  std::make_index_sequence<sizeof...(Ranges)>{});
 }
 
 #endif // COLLECTIONS_H

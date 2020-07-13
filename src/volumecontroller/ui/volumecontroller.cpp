@@ -22,6 +22,7 @@ VolumeController::VolumeController(QWidget *parent)
 	sizePolicy1.setHeightForWidth(sizePolicy().hasHeightForWidth());
 	setSizePolicy(sizePolicy1);
 
+	qDebug() << "Creating audio device manager";
 	auto optManager = AudioDeviceManager::Default();
 	Q_ASSERT(optManager.has_value());
 
@@ -45,9 +46,11 @@ VolumeController::VolumeController(QWidget *parent)
 
 VolumeController::~VolumeController() {
 	saveSettings();
+	qDebug() << "Destroying.";
 }
 
 void VolumeController::createActions() {
+	qDebug() << "Creating actions";
 	showAction = new QAction("Show", this);
 	connect(showAction, &QAction::triggered, this, &VolumeController::fadeIn);
 
@@ -60,6 +63,7 @@ void VolumeController::createActions() {
 }
 
 void VolumeController::createTray() {
+	qDebug() << "Creating tray";
 	trayMenu = new QMenu(this);
 
 	trayMenu->addAction(showAction);
@@ -86,12 +90,14 @@ void VolumeController::createTray() {
 }
 
 void VolumeController::loadSettings() {
+	qDebug().nospace() << "Loading from " << settingsPath << ".";
 	QSettings settings(settingsPath, QSettings::IniFormat);
 	bool showInactive = settings.value("show-inactive", false).toBool();
 	showInactiveAction->setChecked(showInactive);
 }
 
 void VolumeController::saveSettings() {
+	qDebug() << "Saving to " << settingsPath << ".";
 	QSettings settings(settingsPath, QSettings::IniFormat);
 	settings.setValue("show-inactive", deviceVolumeController->controlList().showInactive());
 	settings.sync();

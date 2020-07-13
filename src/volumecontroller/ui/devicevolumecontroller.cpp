@@ -25,36 +25,41 @@ DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManag
 	gridLayout.setContentsMargins(12, 12, 12, 12);
 	gridLayout.setAlignment(Qt::AlignTop);
 
+	qDebug() << "Creating device control.";
 	auto deviceControlPtr = manager.createDeviceControl();
 	Q_ASSERT(deviceControlPtr);
 	_deviceControl = std::move(deviceControlPtr);
 
+	qDebug() << "Creating session groups.";
 	auto optSessionGroups = manager.createSessionGroups();
 	Q_ASSERT(optSessionGroups.has_value());
 	sessionGroups = std::move(*optSessionGroups);
 
-	audioSessionNotification = ComPtr<AudioSessionNotification>(new AudioSessionNotification(this));
-	connect(audioSessionNotification.get(), &AudioSessionNotification::sessionCreated,
-			  this, &DeviceVolumeController::addSession, Qt::ConnectionType::QueuedConnection);
-
 	manager.manager().RegisterSessionNotification(audioSessionNotification.get());
 
-
+	qDebug() << "Creating device item.";
 	createDeviceItem();
 	VolumeControlList::addItem(gridLayout, *deviceItem, 0);
 
 	createLineSeperator();
 	gridLayout.addWidget(separator, 1, 0, 1, 3);
 
+	qDebug() << "Creating VolumeControlList.";
 	_controlList = new VolumeControlList(this, this->sessionGroups);
 	gridLayout.addWidget(_controlList, 2, 0, 1, 3);
 
+	qDebug() << "Starting peak update timer.";
 	QTimer *timer = new QTimer(this);
 	connect(timer, &QTimer::timeout, [this]() {
 		controlList().updatePeaks();
 		deviceItem->updatePeak();
 	});
 	timer->start(15);
+
+	qDebug() << "Start listening on audio session notifications.";
+	audioSessionNotification = ComPtr<AudioSessionNotification>(new AudioSessionNotification(this));
+	connect(audioSessionNotification.get(), &AudioSessionNotification::sessionCreated,
+			  this, &DeviceVolumeController::addSession, Qt::ConnectionType::QueuedConnection);
 }
 
 DeviceVolumeController::~DeviceVolumeController() {

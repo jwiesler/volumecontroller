@@ -106,6 +106,7 @@ bool IsValid(HANDLE handle) {
 
 std::optional<QPixmap> GetProcessImage(DWORD pid, int cx, int cy) {
 	if(pid == 0) {
+		qDebug() << "Getting image for sytem sounds";
 		constexpr auto imagePath = L"%windir%\\system32\\audiosrv.dll";
 		constexpr int offset = 203;
 		constexpr DWORD bufferSize = 260;
@@ -114,6 +115,7 @@ std::optional<QPixmap> GetProcessImage(DWORD pid, int cx, int cy) {
 		if(size != 0 && size <= bufferSize)
 			return GetImageFromFile(buffer, offset, cx, cy);
 	} else {
+		qDebug() << "Getting image for process" << pid;
 		UniqueHandle handle = UniqueHandle(OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid));
 		if(IsValid(handle.get())) {
 			wchar_t buffer[260];
@@ -124,6 +126,7 @@ std::optional<QPixmap> GetProcessImage(DWORD pid, int cx, int cy) {
 		}
 	}
 
+	qDebug() << "Failed to get image for process" << pid;
 	return {};
 }
 
