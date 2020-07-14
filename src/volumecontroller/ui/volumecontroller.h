@@ -48,6 +48,7 @@ private:
 	void saveSettings();
 
 	void onDeviceVolumeChanged(int volume);
+	void updateTray(int volume);
 
 	void reposition();
 

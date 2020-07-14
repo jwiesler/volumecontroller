@@ -208,8 +208,9 @@ void VolumeItemBase::setVolumeFAndMute(float volume, bool mute) {
 
 SessionVolumeItem::SessionVolumeItem(QWidget *parent, AudioSession &control) : VolumeItemBase(parent, control), _control(control) {}
 
-DeviceVolumeItem::DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons) : VolumeItemBase(parent, control), control(control), icons(icons) {
-	updateIcon(control.volume().value_or(0.0f) * 100.0f);
+DeviceVolumeItem::DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons, const QString &deviceName) : VolumeItemBase(parent, control), control(control), icons(icons) {
+	const auto volume = control.volume().value_or(0.0f) * 100.0f;
+	setInfo(icons.selectIcon(volume), deviceName);
 }
 
 void DeviceVolumeItem::setVolumeFAndMute(float volume, bool muted) {

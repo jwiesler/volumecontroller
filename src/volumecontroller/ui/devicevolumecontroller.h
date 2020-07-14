@@ -26,6 +26,10 @@ public:
 	VolumeControlList &controlList() { return *_controlList; }
 	const VolumeControlList &controlList() const { return *_controlList; }
 
+	AudioDeviceManager &deviceManager() { return manager; }
+
+	const QString &deviceName() const { return _deviceName; }
+
 private:
 	void addSession(AudioSession* session);
 
@@ -44,6 +48,7 @@ private:
 	QFrame *separator = nullptr;
 
 	VolumeIcons volumeIcons;
+	QString _deviceName;
 };
 
 #endif // DEVICEVOLUMECONTROLLER_H

@@ -118,7 +118,7 @@ private:
 
 class DeviceVolumeItem : public VolumeItemBase {
 public:
-	DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons);
+	DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons, const QString &deviceName);
 
 	void setVolumeFAndMute(float volume, bool muted);
 

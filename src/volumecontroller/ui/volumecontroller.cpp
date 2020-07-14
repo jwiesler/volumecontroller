@@ -73,9 +73,9 @@ void VolumeController::createTray() {
 	trayMenu->addAction(exitAction);
 
 	trayIcon = new QSystemTrayIcon(this);
-	trayIcon->setIcon(trayVolumeIcons.selectIcon(deviceVolumeController->deviceControl().volume().value_or(0.0f) * 100.0f));
 	trayIcon->setContextMenu(trayMenu);
-	trayIcon->setToolTip("Volume Controller");
+	const auto volume = deviceVolumeController->deviceControl().volume().value_or(0.0f) * 100.0f;
+	updateTray(volume);
 
 	connect(trayIcon, &QSystemTrayIcon::activated, [this](QSystemTrayIcon::ActivationReason reason) {
 		if(reason == QSystemTrayIcon::ActivationReason::Trigger) {
@@ -104,7 +104,14 @@ void VolumeController::saveSettings() {
 }
 
 void VolumeController::onDeviceVolumeChanged(const int volume) {
+	qDebug() << "Device volume changed to" << volume;
+	updateTray(volume);
+}
+
+const QString trayToolTipPattern("%1 %2%");
+void VolumeController::updateTray(const int volume) {
 	trayIcon->setIcon(trayVolumeIcons.selectIcon(volume));
+	trayIcon->setToolTip(trayToolTipPattern.arg(deviceVolumeController->deviceName(), QString::number(volume)));
 }
 
 void VolumeController::onApplicationInactive(const QWidget *activeWindow) {
@@ -130,8 +137,6 @@ void VolumeController::fadeIn() {
 }
 
 void VolumeController::resizeEvent(QResizeEvent *) {
-//	adjustSize();
-//	qDebug() << "Resize VolumeController";
 	reposition();
 }
 

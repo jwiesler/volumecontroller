@@ -37,6 +37,8 @@ DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManag
 
 	manager.manager().RegisterSessionNotification(audioSessionNotification.get());
 
+	_deviceName = manager.device().name().value_or("Lautsprecher");
+
 	qDebug() << "Creating device item.";
 	createDeviceItem();
 	VolumeControlList::addItem(gridLayout, *deviceItem, 0);
@@ -80,7 +82,7 @@ static const QIcon &GetVolumeIcon(const VolumeIcons &volumeIcons, const IAudioCo
 }
 
 void DeviceVolumeController::createDeviceItem() {
-	deviceItem = std::make_unique<DeviceVolumeItem>(this, deviceControl(), volumeIcons);
+	deviceItem = std::make_unique<DeviceVolumeItem>(this, deviceControl(), volumeIcons, deviceName());
 	connect(&deviceControl(), &DeviceAudioControl::volumeChanged, deviceItem.get(), &DeviceVolumeItem::setVolumeFAndMute, Qt::ConnectionType::QueuedConnection);
 }
 
