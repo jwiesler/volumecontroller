@@ -28,6 +28,7 @@ void GridLayout::insertRow(int index) {
 	Q_ASSERT(0 <= index && index < rowCount());
 	const auto it = rows.begin() + index;
 	rows.emplace(it, columnCount());
+	invalidate();
 }
 
 void GridLayout::removeRow(int index) {
@@ -35,12 +36,14 @@ void GridLayout::removeRow(int index) {
 	const auto it = rows.begin() + index;
 	clearRow(*it);
 	rows.erase(it);
+	invalidate();
 }
 
 void GridLayout::clearRowItems(const int index) {
 	Q_ASSERT(0 <= index && index < rowCount());
 	const auto it = rows.begin() + index;
 	clearRow(*it);
+	invalidate();
 }
 
 void GridLayout::clearRows() {
