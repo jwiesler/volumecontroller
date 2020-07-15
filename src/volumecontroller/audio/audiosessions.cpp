@@ -1,5 +1,7 @@
 #include "volumecontroller/audio/audiosessions.h"
 #include "volumecontroller/hresulterrors.h"
+#include "audiodevicemanager.h"
+
 #include <algorithm>
 #include <QDebug>
 
@@ -51,6 +53,13 @@ std::optional<AudioSession::State> AudioSession::state() const {
 
 bool AudioSession::isSystemSound() const {
 	return _sessionControl->IsSystemSoundsSession() == S_OK;
+}
+
+std::optional<DWORD> AudioSession::pid() const
+{
+	DWORD pid;
+	RET_EMPTY(_sessionControl->GetProcessId(&pid));
+	return pid;
 }
 
 void AudioSession::onVolumeChangedEvent(float newVolume, bool newMute)
@@ -190,10 +199,10 @@ void DeviceAudioControl::onVolumeChangedEvent(float volume, bool muted) {
 
 AudioSessionNotification::AudioSessionNotification(QObject *parent) : QObject(parent) {}
 
-#include "audiodevicemanager.h"
-
 HRESULT AudioSessionNotification::OnSessionCreated(IAudioSessionControl *NewSession) {
 	auto session = CreateSession(NewSession);
+	qDebug() << "Session created: pid" << session->pid().value_or(0)
+				<< "state" << ToString(session->state().value_or(AudioSession::State::Expired));
 	emit sessionCreated(session.release());
 	return S_OK;
 }
@@ -218,11 +227,6 @@ HRESULT AudioSessionEvents::OnIconPathChanged(LPCWSTR NewIconPath, LPCGUID Event
 HRESULT AudioSessionEvents::OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext) {
 	if(isApplicationEvent(EventContext))
 		return S_OK;
-	if (NewMute) {
-		printf("MUTE\n");
-	} else {
-		printf("Volume = %d percent\n", (UINT32)(100 * NewVolume + 0.5));
-	}
 
 	session.onVolumeChangedEvent(NewVolume, NewMute);
 	return S_OK;

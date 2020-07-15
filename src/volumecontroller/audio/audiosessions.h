@@ -195,6 +195,8 @@ public:
 
 	bool isSystemSound() const;
 
+	std::optional<DWORD> pid() const;
+
 	const GUID &eventContext() const { return _eventContext; }
 
 	IAudioSessionControl2 &control() { return *_sessionControl; }

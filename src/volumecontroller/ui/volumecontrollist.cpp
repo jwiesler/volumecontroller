@@ -57,16 +57,14 @@ void VolumeControlList::addSession(std::unique_ptr<AudioSession> &&sessionPtr) {
 	if(session.state().value_or(AudioSession::State::Expired) == AudioSession::State::Expired)
 		return;
 
-	DWORD pid;
-	if(FAILED(session.control().GetProcessId(&pid)))
+	auto pidOpt = session.pid();
+	if(!pidOpt)
 		return;
-
-	qDebug().nospace() << "Found session for pid " << pid << ".";
 
 	auto cx = 32 * logicalDpiX() / 96.0;
 	auto cy = 32 * logicalDpiY() / 96.0;
 
-	auto &pidGroup = sessionGroups.findPidGroupOrCreate(pid);
+	auto &pidGroup = sessionGroups.findPidGroupOrCreate(*pidOpt);
 	if(!pidGroup.infoPtr())
 		pidGroup.setInfoPtr(ProgrammInformation::forProcess(pidGroup.pid(), pidGroup.isSystemSound(), QSize(cx, cy)));
 
