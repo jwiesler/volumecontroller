@@ -23,8 +23,17 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 	}
 }
 
+void test() {
+	const std::array<int, 6> ints = {1, 2, 3, 4, 5, 6};
+
+	auto arr = ints;
+	const std::array<int, 3> remove = {1, 2, 5};
+	const auto it = RemoveIndices(arr.begin(), arr.end(), remove.begin(), remove.end());
+}
+
 int main(int argc, char *argv[])
 {
+	test();
 	RunGuard guard("volumecontroller");
 	if(!guard.tryToRun())
 		return 0;
@@ -83,7 +92,7 @@ int main(int argc, char *argv[])
 		if(state == Qt::ApplicationState::ApplicationInactive)
 			w.onApplicationInactive(a.activeWindow());
 	});
-	w.fadeIn();
+//	w.fadeIn();
 
 	return a.exec();
 }
