@@ -35,8 +35,6 @@ DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManag
 	Q_ASSERT(optSessionGroups.has_value());
 	sessionGroups = std::move(*optSessionGroups);
 
-	manager.manager().RegisterSessionNotification(audioSessionNotification.get());
-
 	_deviceName = manager.device().name().value_or("Lautsprecher");
 
 	qDebug() << "Creating device item.";
@@ -62,6 +60,7 @@ DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManag
 	audioSessionNotification = ComPtr<AudioSessionNotification>(new AudioSessionNotification(this));
 	connect(audioSessionNotification.get(), &AudioSessionNotification::sessionCreated,
 			  this, &DeviceVolumeController::addSession, Qt::ConnectionType::QueuedConnection);
+	manager.manager().RegisterSessionNotification(audioSessionNotification.get());
 }
 
 DeviceVolumeController::~DeviceVolumeController() {
