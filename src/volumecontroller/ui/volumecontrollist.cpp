@@ -191,7 +191,13 @@ void VolumeControlList::addNewItem(std::unique_ptr<SessionVolumeItem> &&item) {
 	if(state == AudioSession::State::Active) {
 		insertActiveItem(std::move(item));
 	} else if(state == AudioSession::State::Inactive) {
-		volumeItemsInactive.emplace_back(std::move(item));
+		if(showInactive()) {
+			insertActiveItem(std::move(item));
+		} else {
+			qDebug() << "Hiding inactive item" << item->identifier();
+			item->hide();
+			volumeItemsInactive.emplace_back(std::move(item));
+		}
 	}
 }
 
