@@ -12,6 +12,7 @@ public:
 	void drawComplexControl(ComplexControl control, const QStyleOptionComplex *option, QPainter *painter, const QWidget *widget = nullptr) const override;
 
 	void drawControl(ControlElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget = nullptr) const override;
+	int pixelMetric(PixelMetric pm, const QStyleOption *opt, const QWidget *widget) const override;
 
 	SliderTheme sliderTheme;
 	PushButtonTheme buttonTheme;

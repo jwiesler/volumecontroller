@@ -2,6 +2,7 @@
 
 #include <QStyleOptionSlider>
 #include <QDebug>
+#include <QPainterPath>
 
 #include <QPainter>
 
@@ -58,7 +59,14 @@ void CustomStyle::drawComplexControl(QStyle::ComplexControl control, const QStyl
 							return sliderTheme.slider;
 					}();
 
-					painter->fillRect(sliderRect, color);
+					qreal radius = sliderRect.width() / 2;
+					QPainterPath path(QPointF(sliderRect.left(), sliderRect.top() + radius));
+					path.arcTo(QRectF(sliderRect.left(), sliderRect.top(), sliderRect.width(), sliderRect.width()), 180, -180);
+					path.arcTo(QRectF(sliderRect.left(), sliderRect.bottom() - 2 * radius, sliderRect.width(), 2 * radius), 0, -180);
+					painter->save();
+					painter->setRenderHint(QPainter::Antialiasing);
+					painter->fillPath(path, color);
+					painter->restore();
 				}
 				if(slider->state & State_HasFocus) {
 					QStyleOptionFocusRect fropt;
@@ -119,4 +127,10 @@ void CustomStyle::drawControl(QStyle::ControlElement element, const QStyleOption
 		default:
 			QProxyStyle::drawControl(element, option, painter, widget);
 	}
+}
+
+int CustomStyle::pixelMetric(QStyle::PixelMetric pm, const QStyleOption *opt, const QWidget *widget) const {
+	if(pm == QStyle::PM_SliderLength)
+		return 8;
+	return QProxyStyle::pixelMetric(pm, opt, widget);
 }
