@@ -6,13 +6,14 @@
 #include "volumecontroller/ui/volumecontrollist.h"
 #include "volumecontroller/audio/audiodevicemanager.h"
 #include "volumecontroller/ui/volumeicons.h"
+#include "volumecontroller/ui/theme.h"
 
 class DeviceVolumeController : public QWidget
 {
 	Q_OBJECT
 
 public:
-	DeviceVolumeController(QWidget *parent, AudioDeviceManager &&m);
+	DeviceVolumeController(QWidget *parent, AudioDeviceManager &&m, const DeviceVolumeControllerTheme &theme);
 	~DeviceVolumeController();
 
 	DeviceAudioControl &deviceControl() { return *_deviceControl; }
@@ -33,7 +34,7 @@ public:
 private:
 	void addSession(AudioSession* session);
 
-	void createDeviceItem();
+	void createDeviceItem(const VolumeItemTheme &theme);
 	void createLineSeperator();
 
 	AudioDeviceManager manager;

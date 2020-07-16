@@ -7,8 +7,7 @@
 #include "volumecontroller/audio/audiosessions.h"
 #include "volumecontroller/ui/volumelistitem.h"
 #include "volumecontroller/ui/gridlayout.h"
-
-#include <array>
+#include "volumecontroller/ui/theme.h"
 
 using SessionVolumeItemPtr = std::unique_ptr<SessionVolumeItem>;
 
@@ -17,7 +16,7 @@ class VolumeControlList : public QWidget
 	Q_OBJECT
 
 public:
-	VolumeControlList(QWidget *parent, AudioSessionGroups &sessionGroups);
+	VolumeControlList(QWidget *parent, AudioSessionGroups &sessionGroups, const VolumeItemTheme &item);
 
 	void updatePeaks();
 
@@ -54,6 +53,7 @@ private:
 	std::vector<SessionVolumeItemPtr> volumeItemsInactive;
 
 	bool _showInactive = false;
+	const VolumeItemTheme &itemTheme;
 };
 
 #endif // VOLUMECONTROLLIST_H

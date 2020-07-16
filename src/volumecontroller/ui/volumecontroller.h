@@ -13,6 +13,7 @@
 #include <array>
 
 #include "volumeicons.h"
+#include "volumecontroller/ui/theme.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class VolumeController; }
@@ -24,7 +25,7 @@ class VolumeController : public QWidget {
 	Q_OBJECT
 
 public:
-	VolumeController(QWidget *parent = nullptr);
+	VolumeController(QWidget *parent, const Theme &theme);
 	~VolumeController();
 
 	void onApplicationInactive(const QWidget *activeWindow);

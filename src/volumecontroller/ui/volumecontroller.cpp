@@ -11,11 +11,20 @@
 #include <QDir>
 #include <QSettings>
 
-VolumeController::VolumeController(QWidget *parent)
+VolumeController::VolumeController(QWidget *parent, const Theme &theme)
 	: QWidget(parent),
 	  windowFadeAnimation(this),
-	  trayVolumeIcons(QSize(32, 32), QColor(Qt::white), VolumeIcons::LightGray)
+	  trayVolumeIcons(QSize(32, 32), theme.icon.foreground, theme.icon.background)
 {
+	{
+		auto p = palette();
+		p.setColor(QPalette::Window, theme.base.background);
+		p.setColor(QPalette::WindowText, theme.base.text);
+		p.setColor(QPalette::Light, theme.base.light);
+		p.setColor(QPalette::Dark, theme.base.dark);
+		setPalette(p);
+	}
+
 	QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	sizePolicy1.setHorizontalStretch(0);
 	sizePolicy1.setVerticalStretch(0);
@@ -26,13 +35,13 @@ VolumeController::VolumeController(QWidget *parent)
 	auto optManager = AudioDeviceManager::Default();
 	Q_ASSERT(optManager.has_value());
 
-	setMinimumWidth(300);
+	setMinimumWidth(320);
 	QGridLayout *layout = new QGridLayout(this);
 	layout->setSizeConstraint(QLayout::SetDefaultConstraint);
 	layout->setAlignment(Qt::AlignTop);
 	layout->setContentsMargins(0, 0, 0, 0);
 
-	deviceVolumeController = new DeviceVolumeController(this, std::move(*optManager));
+	deviceVolumeController = new DeviceVolumeController(this, std::move(*optManager), theme.device);
 	layout->addWidget(deviceVolumeController, 0, 0);
 
 	createActions();
@@ -108,7 +117,7 @@ void VolumeController::onDeviceVolumeChanged(const int volume) {
 	updateTray(volume);
 }
 
-const QString trayToolTipPattern("%1 %2%");
+const QString trayToolTipPattern("%1: %2%");
 void VolumeController::updateTray(const int volume) {
 	trayIcon->setIcon(trayVolumeIcons.selectIcon(volume));
 	trayIcon->setToolTip(trayToolTipPattern.arg(deviceVolumeController->deviceName(), QString::number(volume)));

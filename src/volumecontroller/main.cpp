@@ -1,4 +1,6 @@
 #include "runguard.h"
+#include "volumecontroller/ui/customstyle.h"
+#include "volumecontroller/ui/theme.h"
 #include "volumecontroller/ui/volumecontroller.h"
 
 #include <QApplication>
@@ -7,6 +9,7 @@
 #include <QPalette>
 #include <QFile>
 #include <QMutex>
+#include <QStyleFactory>
 
 static QFile logFile("VolumeController.log");
 static QtMessageHandler defaultMessageHandler;
@@ -54,36 +57,16 @@ int main(int argc, char *argv[])
 	}
 
 	QApplication a(argc, argv);
-	VolumeController w;
-//	auto palette = w.palette();
-//	palette.setColor(QPalette::Window, QColor::fromRgb(55, 55, 55));
-//	palette.setColor(QPalette::WindowText, QColor(Qt::white));
-//	palette.setColor(QPalette::ButtonText, QColor(214, 215, 215));
 
-//	palette.setColor(QPalette::Mid, QColor(125, 126, 130));
-//	palette.setColor(QPalette::Dark, QColor(125, 126, 130));
-//	palette.setColor(QPalette::Light, QColor(125, 126, 130));
-//	palette.setColor(QPalette::Base, QColor(125, 126, 130));
-//	palette.setColor(QPalette::AlternateBase, QColor(125, 126, 130));
-//	palette.setColor(QPalette::Button, QColor(125, 126, 130));
-//	palette.setColor(QPalette::Link, QColor(125, 126, 130));
-//	palette.setColor(QPalette::NoRole, QColor(125, 126, 130));
-//	palette.setColor(QPalette::Midlight, QColor(125, 126, 130));
-//	palette.setColor(QPalette::Shadow, QColor(125, 126, 130));
+	auto *ptr = QStyleFactory::create("windowsvista");
+	Q_ASSERT(ptr);
+	CustomStyle style(ptr);
+	const Theme &theme = DarkTheme;
+	style.sliderTheme = DarkSliderTheme;
+	style.buttonTheme = DarkButtonTheme;
+	QApplication::setStyle(&style);
 
-//	palette.setBrush(QPalette::Mid, QColor(125, 126, 130));
-//	palette.setBrush(QPalette::Dark, QColor(125, 126, 130));
-//	palette.setBrush(QPalette::Light, QColor(125, 126, 130));
-//	palette.setBrush(QPalette::Base, QColor(125, 126, 130));
-//	palette.setBrush(QPalette::AlternateBase, QColor(125, 126, 130));
-//	palette.setBrush(QPalette::Button, QColor(125, 126, 130));
-//	palette.setBrush(QPalette::Link, QColor(125, 126, 130));
-//	palette.setBrush(QPalette::NoRole, QColor(125, 126, 130));
-//	palette.setBrush(QPalette::Midlight, QColor(125, 126, 130));
-//	palette.setBrush(QPalette::Shadow, QColor(125, 126, 130));
-
-//	w.setPalette(palette);
-
+	VolumeController w(nullptr, theme);
 	w.setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
 	w.setAttribute(Qt::WA_TranslucentBackground);
 	w.setAttribute(Qt::WA_QuitOnClose);

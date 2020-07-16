@@ -7,30 +7,28 @@
 #include <QPainter>
 #include <QStyleOptionSlider>
 
-const QColor color = QColor::fromRgb(75, 191, 63);
-
-PeakSlider::PeakSlider(QWidget *parent) : QSlider(parent) {}
+PeakSlider::PeakSlider(QWidget *parent, const PeakSliderTheme &theme) : QSlider(parent), theme(theme) {}
 
 void PeakSlider::paintEvent(QPaintEvent *ev) {
 	QSlider::paintEvent(ev);
 
 	QStyleOptionSlider opt;
 	initStyleOption(&opt);
-	auto sliderRect = style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderHandle, this);
-	auto grooveRect = style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderGroove, this);
-
 	QPainter painter(this);
-	auto pen = painter.pen();
-	pen.setColor(color);
-	painter.setPen(pen);
-	const auto x1 = grooveRect.x() + 1;
-	const auto x2 = sliderRect.left() - 1;
-	const auto y1 = grooveRect.y() + grooveRect.height() / 2 - 2;
-	const auto y2 = y1 + 2;
-	QRect r{x1, y1, _peakValue * (x2 - x1) / maximum(),  y2 - y1};
-	if(r.left() < sliderRect.x()) {
-		painter.fillRect(r, color);
+
+	const auto sliderRect = style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderHandle, this);
+	const auto fullGrooveRect = style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderGroove, this);
+
+	const auto grooveRect = QRect(opt.rect.left(), fullGrooveRect.center().y() - 2, opt.rect.width(), 4);
+	const auto innerRect = QRect(grooveRect.left() + 1, grooveRect.top() + 1, grooveRect.width() - 2, grooveRect.height() - 2);
+
+	if(opt.state & QStyle::State_Enabled) {
+		QRect r{innerRect.left(), innerRect.top(), _peakValue * (sliderRect.left() - 1 - innerRect.x()) / maximum(), innerRect.height()};
+		if(r.left() < sliderRect.x()) {
+			painter.fillRect(r, theme.peakMeter);
+		}
 	}
+
 	painter.end();
 }
 
@@ -76,14 +74,14 @@ void PeakSlider::wheelEvent(QWheelEvent *e){
 	QSlider::wheelEvent(&event);
 }
 
-VolumeItemBase::VolumeItemBase(QWidget *parent, IAudioControl &ctrl) : QObject(parent), icon(nullptr), _control(ctrl) {
+VolumeItemBase::VolumeItemBase(QWidget *parent, IAudioControl &ctrl, const VolumeItemTheme &theme) : QObject(parent), icon(nullptr), _control(ctrl) {
 	_descriptionButton = new QPushButton(parent);
 	_descriptionButton->setFlat(true);
 	_descriptionButton->setCheckable(true);
 	_descriptionButton->setIconSize(QSize(32, 32));
 	_descriptionButton->setFixedSize(40, 40);
 
-	_volumeSlider = new PeakSlider(parent);
+	_volumeSlider = new PeakSlider(parent, theme.slider);
 	_volumeSlider->setOrientation(Qt::Horizontal);
 	_volumeSlider->setMaximum(100);
 
@@ -206,9 +204,9 @@ void VolumeItemBase::setVolumeFAndMute(float volume, bool mute) {
 	setMuted(mute);
 }
 
-SessionVolumeItem::SessionVolumeItem(QWidget *parent, AudioSession &control) : VolumeItemBase(parent, control), _control(control) {}
+SessionVolumeItem::SessionVolumeItem(QWidget *parent, AudioSession &control, const VolumeItemTheme &theme) : VolumeItemBase(parent, control, theme), _control(control) {}
 
-DeviceVolumeItem::DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons, const QString &deviceName) : VolumeItemBase(parent, control), control(control), icons(icons) {
+DeviceVolumeItem::DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons, const QString &deviceName, const VolumeItemTheme &theme) : VolumeItemBase(parent, control, theme), control(control), icons(icons) {
 	const auto volume = control.volume().value_or(0.0f) * 100.0f;
 	setInfo(icons.selectIcon(volume), deviceName);
 }

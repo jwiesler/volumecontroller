@@ -9,11 +9,13 @@
 #include <QIcon>
 #include <QPushButton>
 
+#include <volumecontroller/ui/theme.h>
+
 class VolumeIcons;
 
 class PeakSlider : public QSlider{
 public:
-	PeakSlider(QWidget *parent);
+	PeakSlider(QWidget *parent, const PeakSliderTheme &theme);
 
 	void paintEvent(QPaintEvent *ev) override;
 
@@ -40,6 +42,7 @@ private:
 	int _controlScrollStepMultiplier = 1;
 	int _shiftScrollStepMultiplier = 5;
 	int _scrollStepMultiplier = 2;
+	const PeakSliderTheme &theme;
 };
 
 class VolumeItemBase : public QObject {
@@ -48,7 +51,7 @@ class VolumeItemBase : public QObject {
 public:
 	Q_DISABLE_COPY_MOVE(VolumeItemBase);
 
-	VolumeItemBase(QWidget *parent, IAudioControl &control);
+	VolumeItemBase(QWidget *parent, IAudioControl &control, const VolumeItemTheme &theme);
 
 	~VolumeItemBase();
 
@@ -109,7 +112,7 @@ private:
 
 class SessionVolumeItem : public VolumeItemBase {
 public:
-	SessionVolumeItem(QWidget *parent, AudioSession &control);
+	SessionVolumeItem(QWidget *parent, AudioSession &control, const VolumeItemTheme &theme);
 
 	const AudioSession &control() const { return _control; }
 private:
@@ -118,7 +121,7 @@ private:
 
 class DeviceVolumeItem : public VolumeItemBase {
 public:
-	DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons, const QString &deviceName);
+	DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons, const QString &deviceName, const VolumeItemTheme &theme);
 
 	void setVolumeFAndMute(float volume, bool muted);
 

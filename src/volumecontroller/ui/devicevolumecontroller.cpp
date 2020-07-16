@@ -3,11 +3,11 @@
 #include <QTimer>
 #include <QDebug>
 
-DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManager &&m)
+DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManager &&m, const DeviceVolumeControllerTheme &theme)
 	: QWidget(parent),
 	  manager(std::move(m)),
 	  gridLayout(this),
-	  volumeIcons(QSize(32, 32), VolumeIcons::Gray, VolumeIcons::LightGray)
+	  volumeIcons(QSize(32, 32), theme.icon.foreground, theme.icon.background)
 {
 	setObjectName(QString::fromUtf8("DeviceVolumeController"));
 	QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
@@ -38,14 +38,14 @@ DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManag
 	_deviceName = manager.device().name().value_or("Lautsprecher");
 
 	qDebug() << "Creating device item.";
-	createDeviceItem();
+	createDeviceItem(theme.volumeItem);
 	VolumeControlList::addItem(gridLayout, *deviceItem, 0);
 
 	createLineSeperator();
 	gridLayout.addWidget(separator, 1, 0, 1, 3);
 
 	qDebug() << "Creating VolumeControlList.";
-	_controlList = new VolumeControlList(this, this->sessionGroups);
+	_controlList = new VolumeControlList(this, this->sessionGroups, theme.volumeItem);
 	gridLayout.addWidget(_controlList, 2, 0, 1, 3);
 
 	qDebug() << "Starting peak update timer.";
@@ -80,8 +80,8 @@ static const QIcon &GetVolumeIcon(const VolumeIcons &volumeIcons, const IAudioCo
 	return volumeIcons.selectIcon(control.volume().value_or(0.0f) * 100.0f);
 }
 
-void DeviceVolumeController::createDeviceItem() {
-	deviceItem = std::make_unique<DeviceVolumeItem>(this, deviceControl(), volumeIcons, deviceName());
+void DeviceVolumeController::createDeviceItem(const VolumeItemTheme &theme) {
+	deviceItem = std::make_unique<DeviceVolumeItem>(this, deviceControl(), volumeIcons, deviceName(), theme);
 	connect(&deviceControl(), &DeviceAudioControl::volumeChanged, deviceItem.get(), &DeviceVolumeItem::setVolumeFAndMute, Qt::ConnectionType::QueuedConnection);
 }
 

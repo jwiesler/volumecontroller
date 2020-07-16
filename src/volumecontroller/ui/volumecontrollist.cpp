@@ -19,10 +19,11 @@ constexpr auto sessionVolumeItemPtrComparator = [](const SessionVolumeItemPtr &a
 	return sessionVolumeItemComparator(*a, *b);
 };
 
-VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessionGroups)
+VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessionGroups, const VolumeItemTheme &itemTheme)
 	: QWidget(parent),
 	  layout(this),
-	  sessionGroups(sessionGroups)
+	  sessionGroups(sessionGroups),
+	  itemTheme(itemTheme)
 {
 	QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	sizePolicy1.setHorizontalStretch(0);
@@ -132,7 +133,7 @@ void VolumeControlList::setShowInactive(bool value) {
 }
 
 std::unique_ptr<SessionVolumeItem> VolumeControlList::createItem(AudioSession &sessionControl, const AudioSessionPidGroup &group) {
-	std::unique_ptr<SessionVolumeItem> item = std::make_unique<SessionVolumeItem>(this, sessionControl);
+	std::unique_ptr<SessionVolumeItem> item = std::make_unique<SessionVolumeItem>(this, sessionControl, itemTheme);
 
 	Q_ASSERT(group.infoPtr());
 	item->setInfo(group.infoPtr()->icon(), group.infoPtr()->title());
