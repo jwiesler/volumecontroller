@@ -1,5 +1,7 @@
 #ifndef VOLUMEICONS_H
 #define VOLUMEICONS_H
+#include "theme.h"
+
 #include <QIcon>
 #include <QFont>
 #include <array>
@@ -16,12 +18,13 @@ public:
 	static const QColor Gray;
 	static const QColor LightGray;
 
-	VolumeIcons(QSize size, QColor foreground, QColor background);
+	VolumeIcons() = default;
+	VolumeIcons(QSize size, const IconTheme &theme);
 
 	const QIcon &selectIcon(int volume) const;
 
 private:
-	std::array<QIcon *, 4> icons {};
+	std::array<std::unique_ptr<QIcon>, 4> icons {};
 };
 
 #endif // VOLUMEICONS_H

@@ -7,7 +7,7 @@
 #include <QPainter>
 #include <QStyleOptionSlider>
 
-PeakSlider::PeakSlider(QWidget *parent, const PeakSliderTheme &theme) : QSlider(parent), theme(theme) {}
+PeakSlider::PeakSlider(QWidget *parent, const PeakSliderTheme &theme) : QSlider(parent), _theme(&theme) {}
 
 void PeakSlider::paintEvent(QPaintEvent *ev) {
 	QSlider::paintEvent(ev);
@@ -25,11 +25,15 @@ void PeakSlider::paintEvent(QPaintEvent *ev) {
 	if(opt.state & QStyle::State_Enabled) {
 		QRect r{innerRect.left(), innerRect.top(), _peakValue * (sliderRect.left() - 1 - innerRect.x()) / maximum(), innerRect.height()};
 		if(r.left() < sliderRect.x()) {
-			painter.fillRect(r, theme.peakMeter);
+			painter.fillRect(r, _theme->peakMeter);
 		}
 	}
 
 	painter.end();
+}
+
+void PeakSlider::updateTheme(const PeakSliderTheme &t) {
+	_theme = &t;
 }
 
 int PeakSlider::peakValue() const {
@@ -87,7 +91,8 @@ VolumeItemBase::VolumeItemBase(QWidget *parent, IAudioControl &ctrl, const Volum
 
 	_volumeLabel = new QLabel(parent);
 	QFont font = _volumeLabel->font();
-	font.setPointSize(12);
+	font.setPointSize(14);
+	font.setWeight(QFont::Weight::Medium);
 	_volumeLabel->setFont(font);
 	_volumeLabel->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
 	QFontMetrics metrics(font);
@@ -180,6 +185,10 @@ void VolumeItemBase::hide() {
 	_volumeLabel->hide();
 }
 
+void VolumeItemBase::updateTheme(const VolumeItemTheme &theme) {
+	_volumeSlider->updateTheme(theme.slider);
+}
+
 void VolumeItemBase::volumeChangedEvent(const int value) {
 	if(!_control.setVolume(value / 100.0f))
 		qDebug() << "Failed to set volume for" << identifier();
@@ -214,6 +223,12 @@ DeviceVolumeItem::DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control,
 void DeviceVolumeItem::setVolumeFAndMute(float volume, bool muted) {
 	VolumeItemBase::setVolumeFAndMute(volume, muted);
 	updateIcon(volume * 100.0f);
+}
+
+void DeviceVolumeItem::updateThemeAndIcon(const VolumeItemTheme &theme) {
+	VolumeItemBase::updateTheme(theme);
+	const auto volume = control.volume().value_or(0.0f) * 100.0f;
+	updateIcon(volume);
 }
 
 void DeviceVolumeItem::volumeChangedEvent(const int value) {

@@ -83,8 +83,8 @@ constexpr PeakSliderTheme DefaultVolumeSliderTheme {
 };
 
 constexpr PeakSliderTheme DarkVolumeSliderTheme {
-	QColor(58, 217, 42) // peakMeter
-	//ColorFromHex(0x429ce3) // peakMeter
+	//QColor(58, 217, 42) // peakMeter
+	ColorFromHex(0x38A9FF) // peakMeter
 };
 
 
@@ -135,39 +135,115 @@ constexpr BaseTheme DefaultBaseTheme {
 };
 
 constexpr BaseTheme DarkBaseTheme {
-	Gray, // background
+	QColor(55, 55, 55), // background
+	White, // text
+	Gray6, // light
+	LightGray, // dark
+};
+
+constexpr BaseTheme DefaultOpaqueBaseTheme {
+	QColor(240, 240, 240, 245), // background
+	Black, // text
+	White, // light
+	QColor(160, 160, 160), // dark
+};
+
+constexpr BaseTheme DarkOpaqueBaseTheme {
+	QColor(55, 55, 55, 245), // background
 	White, // text
 	Gray6, // light
 	LightGray, // dark
 };
 
 struct DeviceVolumeControllerTheme {
-	IconTheme icon;
-	VolumeItemTheme volumeItem;
+	const IconTheme *_icon;
+	const VolumeItemTheme *_volumeItem;
+
+	constexpr DeviceVolumeControllerTheme(const IconTheme &i, const VolumeItemTheme &v) : _icon(&i), _volumeItem(&v) {}
+
+	constexpr void setIcon(const IconTheme &theme) { _icon = &theme; }
+	constexpr const IconTheme &icon() const { return *_icon; }
+
+	constexpr void setVolumeItem(const VolumeItemTheme &theme) { _volumeItem = &theme; }
+	constexpr const VolumeItemTheme &volumeItem() const { return *_volumeItem; }
 };
 
-struct Theme {
-	BaseTheme base;
-	IconTheme icon;
-	DeviceVolumeControllerTheme device;
+class Theme {
+	const BaseTheme *_base;
+	const IconTheme *_icon;
+	const SliderTheme *_slider;
+	const PushButtonTheme *_button;
+	DeviceVolumeControllerTheme _device;
+
+public:
+	constexpr Theme(
+			const BaseTheme &base, const IconTheme &icon,
+			const SliderTheme &sliderTheme, const PushButtonTheme &buttonTheme,
+			DeviceVolumeControllerTheme device)
+		: _base(&base), _icon(&icon), _slider(&sliderTheme), _button(&buttonTheme), _device(device) {}
+
+	constexpr void setBase(const BaseTheme &theme) { _base = &theme; }
+	constexpr const BaseTheme &base() const { return *_base; }
+
+	constexpr void setIcon(const IconTheme &theme) { _icon = &theme; }
+	constexpr const IconTheme &icon() const { return *_icon; }
+
+	constexpr const SliderTheme &slider() const { return *_slider; }
+	constexpr const PushButtonTheme &button() const { return *_button; }
+
+	constexpr DeviceVolumeControllerTheme &device() { return _device; }
+	constexpr const DeviceVolumeControllerTheme &device() const { return _device; }
 };
 
 constexpr Theme DefaultTheme {
 	DefaultBaseTheme,
 	DefaultTrayIconTheme,
+	DefaultSliderTheme,
+	DefaultButtonTheme,
 	DeviceVolumeControllerTheme {
 		DefaultIconTheme,
 		DefaultVolumeItemTheme,
 	}
 };
 
+constexpr Theme DefaultOpaqueTheme {
+	DefaultOpaqueBaseTheme,
+	DefaultTrayIconTheme,
+	DefaultSliderTheme,
+	DefaultButtonTheme,
+	DeviceVolumeControllerTheme {
+		DefaultIconTheme,
+		DefaultVolumeItemTheme,
+	}
+};
+
+
 constexpr Theme DarkTheme {
 	DarkBaseTheme,
 	DefaultTrayIconTheme,
+	DarkSliderTheme,
+	DarkButtonTheme,
 	DeviceVolumeControllerTheme {
 		DarkIconTheme,
 		DarkVolumeItemTheme,
 	}
 };
+
+constexpr Theme DarkOpaqueTheme {
+	DarkOpaqueBaseTheme,
+	DefaultTrayIconTheme,
+	DarkSliderTheme,
+	DarkButtonTheme,
+	DeviceVolumeControllerTheme {
+		DarkIconTheme,
+		DarkVolumeItemTheme,
+	}
+};
+
+constexpr const Theme &SelectTheme(bool dark, bool opaque) {
+	if(dark)
+		return opaque ? DarkOpaqueTheme : DarkTheme;
+	return opaque ? DefaultOpaqueTheme : DefaultTheme;
+}
 
 #endif // THEME_H

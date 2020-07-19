@@ -5,6 +5,7 @@
 #include "volumelistitem.h"
 #include "devicevolumecontroller.h"
 #include "windowfadeanimation.h"
+#include "customstyle.h"
 
 #include <QSystemTrayIcon>
 #include <QMenu>
@@ -25,7 +26,7 @@ class VolumeController : public QWidget {
 	Q_OBJECT
 
 public:
-	VolumeController(QWidget *parent, const Theme &theme);
+	VolumeController(QWidget *parent, CustomStyle &style);
 	~VolumeController();
 
 	void onApplicationInactive(const QWidget *activeWindow);
@@ -40,26 +41,37 @@ public:
 
 	void setShowInactive(bool value);
 
+	void changeTheme(const Theme &theme);
+
 private:
-	void createActions();
+	void setBaseTheme(const BaseTheme &theme);
+	void setStyleTheme(const Theme &theme);
+
+	void createActions(bool showInactiveInitial, bool darkThemeInitial, bool opaqueInitial);
 	void createAnimations();
 	void createTray();
 
-	void loadSettings();
 	void saveSettings();
 
+	void setDarkTheme(bool value);
+	void setOpaqueTheme(bool value);
+
 	void onDeviceVolumeChanged(int volume);
+	void updateTray();
 	void updateTray(int volume);
 
 	void reposition();
 
 	DeviceVolumeController *deviceVolumeController = nullptr;
 	WindowFadeAnimation windowFadeAnimation;
+	CustomStyle &_style;
 
 	QMenu * trayMenu = nullptr;
 	QSystemTrayIcon *trayIcon = nullptr;
 	QAction *showAction = nullptr;
 	QAction *showInactiveAction = nullptr;
+	QAction *toggleOpaqueAction = nullptr;
+	QAction *toggleDarkThemeAction = nullptr;
 	QAction *exitAction = nullptr;
 	VolumeIcons trayVolumeIcons;
 

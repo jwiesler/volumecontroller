@@ -14,6 +14,8 @@ public:
 	void fadeOut();
 	void finishAnimation();
 
+	void setTargetValue(qreal value);
+
 private:
 	QWidget * const target;
 

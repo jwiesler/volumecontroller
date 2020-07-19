@@ -7,13 +7,13 @@ WindowFadeAnimation::WindowFadeAnimation(QWidget *target)
 	  fadeInAnimation(target, "windowOpacity"),
 	  fadeOutAnimation(target, "windowOpacity") {
 	fadeInAnimation.setDuration(250);
-	fadeInAnimation.setStartValue(0);
-	fadeInAnimation.setEndValue(1);
+	fadeInAnimation.setStartValue(qreal(0));
+	fadeInAnimation.setEndValue(qreal(1));
 	fadeInAnimation.setEasingCurve(QEasingCurve::InExpo);
 
 	fadeOutAnimation.setDuration(250);
-	fadeOutAnimation.setStartValue(1);
-	fadeOutAnimation.setEndValue(0);
+	fadeOutAnimation.setStartValue(qreal(1));
+	fadeOutAnimation.setEndValue(qreal(0));
 	fadeOutAnimation.setEasingCurve(QEasingCurve::OutExpo);
 
 	QObject::connect(&fadeOutAnimation, &QPropertyAnimation::finished, target, &QWidget::hide);
@@ -41,4 +41,9 @@ void WindowFadeAnimation::finishAnimation()
 		target->setWindowOpacity(isFadeIn ? 1.0 : 0.0);
 		target->repaint();
 	}
+}
+
+void WindowFadeAnimation::setTargetValue(qreal value) {
+	fadeOutAnimation.setStartValue(value);
+	fadeInAnimation.setEndValue(value);
 }

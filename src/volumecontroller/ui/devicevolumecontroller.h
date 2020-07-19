@@ -13,7 +13,7 @@ class DeviceVolumeController : public QWidget
 	Q_OBJECT
 
 public:
-	DeviceVolumeController(QWidget *parent, AudioDeviceManager &&m, const DeviceVolumeControllerTheme &theme);
+	DeviceVolumeController(QWidget *parent, AudioDeviceManager &&m, const DeviceVolumeControllerTheme &theme, bool showInactive);
 	~DeviceVolumeController();
 
 	DeviceAudioControl &deviceControl() { return *_deviceControl; }
@@ -30,6 +30,8 @@ public:
 	AudioDeviceManager &deviceManager() { return manager; }
 
 	const QString &deviceName() const { return _deviceName; }
+
+	void changeTheme(const DeviceVolumeControllerTheme &theme);
 
 private:
 	void addSession(AudioSession* session);

@@ -16,7 +16,7 @@ class VolumeControlList : public QWidget
 	Q_OBJECT
 
 public:
-	VolumeControlList(QWidget *parent, AudioSessionGroups &sessionGroups, const VolumeItemTheme &item);
+	VolumeControlList(QWidget *parent, AudioSessionGroups &sessionGroups, const VolumeItemTheme &item, bool showInactive);
 
 	void updatePeaks();
 
@@ -31,7 +31,7 @@ public:
 
 private:
 	std::unique_ptr<SessionVolumeItem> createItem(AudioSession &sessionControl, const AudioSessionPidGroup &group);
-	void createItems();
+	void createItems(bool showInactive);
 
 	void addNewItem(std::unique_ptr<SessionVolumeItem> &&item);
 	void insertActiveItem(std::unique_ptr<SessionVolumeItem> &&item);

@@ -3,11 +3,13 @@
 #include <QTimer>
 #include <QDebug>
 
-DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManager &&m, const DeviceVolumeControllerTheme &theme)
+constexpr QSize deviceVolumeIconSize = QSize(32, 32);
+
+DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManager &&m, const DeviceVolumeControllerTheme &theme, bool showInactive)
 	: QWidget(parent),
 	  manager(std::move(m)),
 	  gridLayout(this),
-	  volumeIcons(QSize(32, 32), theme.icon.foreground, theme.icon.background)
+	  volumeIcons(deviceVolumeIconSize, theme.icon())
 {
 	setObjectName(QString::fromUtf8("DeviceVolumeController"));
 	QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
@@ -38,14 +40,14 @@ DeviceVolumeController::DeviceVolumeController(QWidget *parent, AudioDeviceManag
 	_deviceName = manager.device().name().value_or("Lautsprecher");
 
 	qDebug() << "Creating device item.";
-	createDeviceItem(theme.volumeItem);
+	createDeviceItem(theme.volumeItem());
 	VolumeControlList::addItem(gridLayout, *deviceItem, 0);
 
 	createLineSeperator();
 	gridLayout.addWidget(separator, 1, 0, 1, 3);
 
 	qDebug() << "Creating VolumeControlList.";
-	_controlList = new VolumeControlList(this, this->sessionGroups, theme.volumeItem);
+	_controlList = new VolumeControlList(this, this->sessionGroups, theme.volumeItem(), showInactive);
 	gridLayout.addWidget(_controlList, 2, 0, 1, 3);
 
 	qDebug() << "Starting peak update timer.";
@@ -70,6 +72,11 @@ DeviceVolumeController::~DeviceVolumeController() {
 void DeviceVolumeController::resizeEvent(QResizeEvent *) {
 //	qDebug() << "Resize DeviceVolumeController";
 	parentWidget()->adjustSize();
+}
+
+void DeviceVolumeController::changeTheme(const DeviceVolumeControllerTheme &theme) {
+	volumeIcons = VolumeIcons(deviceVolumeIconSize, theme.icon());
+	deviceItem->updateThemeAndIcon(theme.volumeItem());
 }
 
 void DeviceVolumeController::addSession(AudioSession *sessionPtr) {

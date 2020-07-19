@@ -11,19 +11,30 @@
 #include <QDir>
 #include <QSettings>
 
-VolumeController::VolumeController(QWidget *parent, const Theme &theme)
+constexpr QSize trayIconSize = QSize(32, 32);
+
+const struct {
+	QString darkTheme = "dark-theme";
+	QString opaqueTheme = "opaque";
+	QString showInactive = "show-inactive";
+} settingsKeys;
+
+VolumeController::VolumeController(QWidget *parent, CustomStyle &style)
 	: QWidget(parent),
 	  windowFadeAnimation(this),
-	  trayVolumeIcons(QSize(32, 32), theme.icon.foreground, theme.icon.background)
+	  _style(style)
 {
-	{
-		auto p = palette();
-		p.setColor(QPalette::Window, theme.base.background);
-		p.setColor(QPalette::WindowText, theme.base.text);
-		p.setColor(QPalette::Light, theme.base.light);
-		p.setColor(QPalette::Dark, theme.base.dark);
-		setPalette(p);
-	}
+	settingsPath = QDir::cleanPath(QApplication::applicationDirPath() + QDir::separator() + "settings.ini");
+	qDebug().nospace() << "Loading settings from " << settingsPath << ".";
+	QSettings settings(settingsPath, QSettings::IniFormat);
+	const auto darkTheme = settings.value(settingsKeys.darkTheme, false).toBool();
+	const auto opaqueTheme = settings.value(settingsKeys.opaqueTheme, false).toBool();
+	const auto showInactive = settings.value(settingsKeys.showInactive, false).toBool();
+
+	const Theme &theme = SelectTheme(darkTheme, opaqueTheme);
+	setBaseTheme(theme.base());
+	setStyleTheme(theme);
+	trayVolumeIcons = VolumeIcons(trayIconSize, theme.icon());
 
 	QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	sizePolicy1.setHorizontalStretch(0);
@@ -41,14 +52,10 @@ VolumeController::VolumeController(QWidget *parent, const Theme &theme)
 	layout->setAlignment(Qt::AlignTop);
 	layout->setContentsMargins(0, 0, 0, 0);
 
-	deviceVolumeController = new DeviceVolumeController(this, std::move(*optManager), theme.device);
+	deviceVolumeController = new DeviceVolumeController(this, std::move(*optManager), theme.device(), showInactive);
 	layout->addWidget(deviceVolumeController, 0, 0);
 
-	createActions();
-
-	settingsPath = QDir::cleanPath(QApplication::applicationDirPath() + QDir::separator() + "settings.ini");
-	loadSettings();
-
+	createActions(showInactive, darkTheme, opaqueTheme);
 	createTray();
 	trayIcon->show();
 }
@@ -58,16 +65,27 @@ VolumeController::~VolumeController() {
 	qDebug() << "Destroying.";
 }
 
-void VolumeController::createActions() {
+void VolumeController::createActions(bool showInactiveInitial, bool darkThemeInitial, bool opaqueInitial) {
 	qDebug() << "Creating actions";
-	showAction = new QAction("Show", this);
+	showAction = new QAction(tr("Show"), this);
 	connect(showAction, &QAction::triggered, this, &VolumeController::fadeIn);
 
-	showInactiveAction = new QAction("Show inactive", this);
+	showInactiveAction = new QAction(tr("Show inactive"), this);
 	showInactiveAction->setCheckable(true);
+	showInactiveAction->setChecked(showInactiveInitial);
 	connect(showInactiveAction, &QAction::toggled, this, &VolumeController::setShowInactive);
 
-	exitAction = new QAction("Exit", this);
+	toggleDarkThemeAction = new QAction(tr("Dark theme"), this);
+	toggleDarkThemeAction->setCheckable(true);
+	toggleDarkThemeAction->setChecked(darkThemeInitial);
+	connect(toggleDarkThemeAction, &QAction::toggled, this, &VolumeController::setDarkTheme);
+
+	toggleOpaqueAction = new QAction(tr("Opaque"), this);
+	toggleOpaqueAction->setCheckable(true);
+	toggleOpaqueAction->setChecked(opaqueInitial);
+	connect(toggleOpaqueAction, &QAction::toggled, this, &VolumeController::setOpaqueTheme);
+
+	exitAction = new QAction(tr("Exit"), this);
 	connect(exitAction, &QAction::triggered, this, &VolumeController::close);
 }
 
@@ -78,13 +96,14 @@ void VolumeController::createTray() {
 	trayMenu->addAction(showAction);
 	trayMenu->addSeparator();
 	trayMenu->addAction(showInactiveAction);
+	trayMenu->addAction(toggleDarkThemeAction);
+	trayMenu->addAction(toggleOpaqueAction);
 	trayMenu->addSeparator();
 	trayMenu->addAction(exitAction);
 
 	trayIcon = new QSystemTrayIcon(this);
 	trayIcon->setContextMenu(trayMenu);
-	const auto volume = deviceVolumeController->deviceControl().volume().value_or(0.0f) * 100.0f;
-	updateTray(volume);
+	updateTray();
 
 	connect(trayIcon, &QSystemTrayIcon::activated, [this](QSystemTrayIcon::ActivationReason reason) {
 		if(reason == QSystemTrayIcon::ActivationReason::Trigger) {
@@ -98,22 +117,34 @@ void VolumeController::createTray() {
 	connect(&deviceVolumeController->deviceVolumeItem(), &DeviceVolumeItem::volumeChanged, this, &VolumeController::onDeviceVolumeChanged);
 }
 
-void VolumeController::loadSettings() {
-	qDebug().nospace() << "Loading from " << settingsPath << ".";
-	QSettings settings(settingsPath, QSettings::IniFormat);
-	bool showInactive = settings.value("show-inactive", false).toBool();
-	showInactiveAction->setChecked(showInactive);
-}
-
 void VolumeController::saveSettings() {
 	qDebug() << "Saving to " << settingsPath << ".";
 	QSettings settings(settingsPath, QSettings::IniFormat);
-	settings.setValue("show-inactive", deviceVolumeController->controlList().showInactive());
+	settings.setValue(settingsKeys.darkTheme, toggleDarkThemeAction->isChecked());
+	settings.setValue(settingsKeys.opaqueTheme, toggleOpaqueAction->isChecked());
+	settings.setValue(settingsKeys.showInactive, deviceVolumeController->controlList().showInactive());
 	settings.sync();
+}
+
+void VolumeController::setDarkTheme(bool value) {
+	const bool dark = value;
+	const bool opaque = toggleOpaqueAction->isChecked();
+	changeTheme(SelectTheme(dark, opaque));
+}
+
+void VolumeController::setOpaqueTheme(bool value) {
+	const bool dark = toggleDarkThemeAction->isChecked();
+	const bool opaque = value;
+	changeTheme(SelectTheme(dark, opaque));
 }
 
 void VolumeController::onDeviceVolumeChanged(const int volume) {
 	qDebug() << "Device volume changed to" << volume;
+	updateTray(volume);
+}
+
+void VolumeController::updateTray() {
+	const auto volume = deviceVolumeController->deviceControl().volume().value_or(0.0f) * 100.0f;
 	updateTray(volume);
 }
 
@@ -151,6 +182,30 @@ void VolumeController::resizeEvent(QResizeEvent *) {
 
 void VolumeController::setShowInactive(bool value) {
 	deviceVolumeController->controlList().setShowInactive(value);
+}
+
+void VolumeController::changeTheme(const Theme &theme) {
+	setBaseTheme(theme.base());
+	setStyleTheme(theme);
+	trayVolumeIcons = VolumeIcons(trayIconSize, theme.icon());
+	updateTray();
+	deviceVolumeController->changeTheme(theme.device());
+}
+
+void VolumeController::setBaseTheme(const BaseTheme &theme){
+	auto p = palette();
+	p.setColor(QPalette::Window, theme.background);
+	p.setColor(QPalette::WindowText, theme.text);
+	p.setColor(QPalette::Light, theme.light);
+	p.setColor(QPalette::Dark, theme.dark);
+	setPalette(p);
+
+	windowFadeAnimation.setTargetValue(theme.background.alphaF());
+}
+
+void VolumeController::setStyleTheme(const Theme &theme){
+	_style.buttonTheme = theme.button();
+	_style.sliderTheme = theme.slider();
 }
 
 void VolumeController::reposition() {

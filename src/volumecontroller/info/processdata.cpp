@@ -20,7 +20,7 @@ std::optional<QPixmap> GetIcon(PCWSTR path, bool isDesktopApp, int cx, int cy) {
 	IShellItemImageFactory *factory;
 	RET_EMPTY(item->QueryInterface(__uuidof(IShellItemImageFactory), (void**)&factory));
 	HBITMAP bitmap;
-	factory->GetImage(SIZE{cx, cy}, SIIGBF_RESIZETOFIT, &bitmap);
+	RET_EMPTY(factory->GetImage(SIZE{cx, cy}, SIIGBF_RESIZETOFIT, &bitmap));
 
 	QPixmap map = QtWin::fromHBITMAP(bitmap, QtWin::HBitmapAlpha);
 	DeleteObject(bitmap);

@@ -124,6 +124,15 @@ void CustomStyle::drawControl(QStyle::ControlElement element, const QStyleOption
 			}
 			break;
 
+		case CE_PushButtonLabel:
+			if (const QStyleOptionButton *btn = qstyleoption_cast<const QStyleOptionButton *>(option)) {
+				painter->save();
+				if(!btn->icon.isNull())
+					painter->setRenderHint(QPainter::Antialiasing);
+				QProxyStyle::drawControl(element, option, painter, widget);
+				painter->restore();
+			}
+			break;
 		default:
 			QProxyStyle::drawControl(element, option, painter, widget);
 	}

@@ -19,7 +19,7 @@ constexpr auto sessionVolumeItemPtrComparator = [](const SessionVolumeItemPtr &a
 	return sessionVolumeItemComparator(*a, *b);
 };
 
-VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessionGroups, const VolumeItemTheme &itemTheme)
+VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessionGroups, const VolumeItemTheme &itemTheme, bool showInactive)
 	: QWidget(parent),
 	  layout(this),
 	  sessionGroups(sessionGroups),
@@ -44,7 +44,7 @@ VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessio
 	layout.setAlignment(Qt::AlignTop);
 	layout.setContentsMargins(0, 0, 0, 0);
 
-	createItems();
+	createItems(showInactive);
 }
 
 void VolumeControlList::updatePeaks() {
@@ -153,7 +153,7 @@ std::unique_ptr<SessionVolumeItem> VolumeControlList::createItem(AudioSession &s
 	return item;
 }
 
-void VolumeControlList::createItems() {
+void VolumeControlList::createItems(bool showInactive) {
 	auto cx = 32 * logicalDpiX() / 96.0;
 	auto cy = 32 * logicalDpiY() / 96.0;
 
@@ -169,9 +169,13 @@ void VolumeControlList::createItems() {
 					continue;
 
 				auto item = createItem(*sessionControl, *g);
-				if(state == AudioSession::State::Active) {
+				if(state == AudioSession::State::Expired)
+					continue;
+
+				if(state == AudioSession::State::Active || showInactive) {
 					volumeItems.emplace_back(std::move(item));
 				} else if(state == AudioSession::State::Inactive) {
+					qDebug() << "Hiding inactive item" << item->identifier();
 					item->hide();
 					volumeItemsInactive.emplace_back(std::move(item));
 				}
@@ -189,16 +193,15 @@ void VolumeControlList::createItems() {
 void VolumeControlList::addNewItem(std::unique_ptr<SessionVolumeItem> &&item) {
 	const auto state = item->control().state().value_or(AudioSession::State::Expired);
 	qDebug() << "Item" << item->identifier() << "is" << ToString(state);
-	if(state == AudioSession::State::Active) {
+	if(state == AudioSession::State::Expired)
+		return;
+
+	if(state == AudioSession::State::Active || showInactive()) {
 		insertActiveItem(std::move(item));
 	} else if(state == AudioSession::State::Inactive) {
-		if(showInactive()) {
-			insertActiveItem(std::move(item));
-		} else {
-			qDebug() << "Hiding inactive item" << item->identifier();
-			item->hide();
-			volumeItemsInactive.emplace_back(std::move(item));
-		}
+		qDebug() << "Hiding inactive item" << item->identifier();
+		item->hide();
+		volumeItemsInactive.emplace_back(std::move(item));
 	}
 }
 
@@ -227,7 +230,7 @@ void VolumeControlList::sortItems() {
 
 	Q_ASSERT(std::is_sorted(volumeItems.begin(), volumeItems.end(), sessionVolumeItemPtrComparator));
 	Q_ASSERT(int(volumeItems.size()) == layout.rowCount());
-	qDebug().noquote() << "Sorted items are:" << Join(volumeItems, ", ", [](auto &str, const auto &item) {
+	qDebug().noquote().nospace() << "Sorted items are: " << Join(volumeItems, ", ", [](auto &str, const auto &item) {
 		str << item->identifier();
 	});
 }

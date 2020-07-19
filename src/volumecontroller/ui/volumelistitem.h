@@ -19,6 +19,8 @@ public:
 
 	void paintEvent(QPaintEvent *ev) override;
 
+	void updateTheme(const PeakSliderTheme &theme);
+
 	int peakValue() const;
 	void setPeakValue(int value);
 
@@ -42,7 +44,7 @@ private:
 	int _controlScrollStepMultiplier = 1;
 	int _shiftScrollStepMultiplier = 5;
 	int _scrollStepMultiplier = 2;
-	const PeakSliderTheme &theme;
+	const PeakSliderTheme *_theme;
 };
 
 class VolumeItemBase : public QObject {
@@ -77,6 +79,8 @@ public:
 	QPushButton *descriptionButton() { return _descriptionButton; }
 	PeakSlider *volumeSlider() { return _volumeSlider; }
 	QLabel *volumeLabel() { return _volumeLabel; }
+
+	void updateTheme(const VolumeItemTheme &theme);
 
 protected:
 	void setMuted(bool muted);
@@ -124,6 +128,7 @@ public:
 	DeviceVolumeItem(QWidget *parent, DeviceAudioControl &control, const VolumeIcons &icons, const QString &deviceName, const VolumeItemTheme &theme);
 
 	void setVolumeFAndMute(float volume, bool muted);
+	void updateThemeAndIcon(const VolumeItemTheme &theme);
 
 protected:
 	void volumeChangedEvent(int value) override;

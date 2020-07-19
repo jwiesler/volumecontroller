@@ -18,7 +18,7 @@ void DrawVolumeIcon(QPainter &painter, QChar c, const QRect &rect, QColor foregr
 	painter.drawText(rect, Qt::AlignCenter, c);
 }
 
-VolumeIcons::VolumeIcons(QSize size, QColor foreground, QColor background) {
+VolumeIcons::VolumeIcons(QSize size, const IconTheme &theme) {
 	QImage image(size, QImage::Format::Format_RGBA8888);
 	const auto rect = QRect(0, 0, size.width(), size.height());
 
@@ -26,22 +26,22 @@ VolumeIcons::VolumeIcons(QSize size, QColor foreground, QColor background) {
 	painter.setFont(IconFont);
 
 	image.fill(0);
-	painter.setPen(foreground);
+	painter.setPen(theme.foreground);
 	painter.drawText(rect, Qt::AlignCenter, Mute);
-	icons[0] = new QIcon(QPixmap::fromImage(image));
+	icons[0] = std::make_unique<QIcon>(QPixmap::fromImage(image));
 
 	image.fill(0);
-	DrawVolumeIcon(painter, Volume1, rect, foreground, background);
-	icons[1] = new QIcon(QPixmap::fromImage(image));
+	DrawVolumeIcon(painter, Volume1, rect, theme.foreground, theme.background);
+	icons[1] = std::make_unique<QIcon>(QPixmap::fromImage(image));
 
 	image.fill(0);
-	DrawVolumeIcon(painter, Volume2, rect, foreground, background);
-	icons[2] = new QIcon(QPixmap::fromImage(image));
+	DrawVolumeIcon(painter, Volume2, rect, theme.foreground, theme.background);
+	icons[2] = std::make_unique<QIcon>(QPixmap::fromImage(image));
 
 	image.fill(0);
-	painter.setPen(foreground);
+	painter.setPen(theme.foreground);
 	painter.drawText(rect, Qt::AlignCenter, Volume3);
-	icons[3] = new QIcon(QPixmap::fromImage(image));
+	icons[3] = std::make_unique<QIcon>(QPixmap::fromImage(image));
 }
 
 const QIcon &VolumeIcons::selectIcon(int volume) const {
