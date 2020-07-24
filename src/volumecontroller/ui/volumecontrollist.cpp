@@ -23,7 +23,8 @@ VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessio
 	: QWidget(parent),
 	  layout(this),
 	  sessionGroups(sessionGroups),
-	  itemThemeRef(itemTheme)
+	  itemThemeRef(itemTheme),
+	  _showInactive(showInactive)
 {
 	QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	sizePolicy1.setHorizontalStretch(0);
@@ -44,7 +45,7 @@ VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessio
 	layout.setAlignment(Qt::AlignTop);
 	layout.setContentsMargins(0, 0, 0, 0);
 
-	createItems(showInactive);
+	createItems();
 }
 
 void VolumeControlList::updatePeaks() {
@@ -163,7 +164,7 @@ std::unique_ptr<SessionVolumeItem> VolumeControlList::createItem(AudioSession &s
 	return item;
 }
 
-void VolumeControlList::createItems(bool showInactive) {
+void VolumeControlList::createItems() {
 	auto cx = 32 * logicalDpiX() / 96.0;
 	auto cy = 32 * logicalDpiY() / 96.0;
 
@@ -182,7 +183,7 @@ void VolumeControlList::createItems(bool showInactive) {
 				if(state == AudioSession::State::Expired)
 					continue;
 
-				if(state == AudioSession::State::Active || showInactive) {
+				if(state == AudioSession::State::Active || showInactive()) {
 					volumeItems.emplace_back(std::move(item));
 				} else if(state == AudioSession::State::Inactive) {
 					qDebug() << "Hiding inactive item" << item->identifier();

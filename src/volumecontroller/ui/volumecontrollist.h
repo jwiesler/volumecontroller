@@ -35,7 +35,7 @@ public:
 
 private:
 	std::unique_ptr<SessionVolumeItem> createItem(AudioSession &sessionControl, const AudioSessionPidGroup &group);
-	void createItems(bool showInactive);
+	void createItems();
 
 	void addNewItem(std::unique_ptr<SessionVolumeItem> &&item);
 	void insertActiveItem(std::unique_ptr<SessionVolumeItem> &&item);
