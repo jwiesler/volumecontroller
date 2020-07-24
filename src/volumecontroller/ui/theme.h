@@ -141,20 +141,6 @@ constexpr BaseTheme DarkBaseTheme {
 	LightGray, // dark
 };
 
-constexpr BaseTheme DefaultTransparentBaseTheme {
-	QColor(240, 240, 240, 245), // background
-	Black, // text
-	White, // light
-	QColor(160, 160, 160), // dark
-};
-
-constexpr BaseTheme DarkTransparentBaseTheme {
-	QColor(55, 55, 55, 245), // background
-	White, // text
-	Gray6, // light
-	LightGray, // dark
-};
-
 struct DeviceVolumeControllerTheme {
 	const IconTheme *_icon;
 	const VolumeItemTheme *_volumeItem;
@@ -206,18 +192,6 @@ constexpr Theme DefaultTheme {
 	}
 };
 
-constexpr Theme DefaultTransparentTheme {
-	DefaultTransparentBaseTheme,
-	DefaultTrayIconTheme,
-	DefaultSliderTheme,
-	DefaultButtonTheme,
-	DeviceVolumeControllerTheme {
-		DefaultIconTheme,
-		DefaultVolumeItemTheme,
-	}
-};
-
-
 constexpr Theme DarkTheme {
 	DarkBaseTheme,
 	DefaultTrayIconTheme,
@@ -229,21 +203,10 @@ constexpr Theme DarkTheme {
 	}
 };
 
-constexpr Theme DarkTransparentTheme {
-	DarkTransparentBaseTheme,
-	DefaultTrayIconTheme,
-	DarkSliderTheme,
-	DarkButtonTheme,
-	DeviceVolumeControllerTheme {
-		DarkIconTheme,
-		DarkVolumeItemTheme,
-	}
-};
-
-constexpr const Theme &SelectTheme(bool dark, bool transparent) {
+constexpr const Theme &SelectTheme(bool dark) {
 	if(dark)
-		return transparent ? DarkTransparentTheme : DarkTheme;
-	return transparent ? DefaultTransparentTheme : DefaultTheme;
+		return DarkTheme;
+	return DefaultTheme;
 }
 
 #endif // THEME_H

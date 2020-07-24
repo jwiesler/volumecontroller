@@ -66,6 +66,9 @@ private:
 	WindowFadeAnimation windowFadeAnimation;
 	CustomStyle &_style;
 
+	bool transparentTheme = false;
+	qreal transparentThemeAlpha = qreal(1);
+
 	QMenu * trayMenu = nullptr;
 	QSystemTrayIcon *trayIcon = nullptr;
 	QAction *showAction = nullptr;

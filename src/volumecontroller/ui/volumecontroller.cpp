@@ -16,6 +16,7 @@ constexpr QSize trayIconSize = QSize(32, 32);
 const struct {
 	QString darkTheme = "dark-theme";
 	QString transparentTheme = "transparent";
+	QString transparentThemeTransparency = "transparent-transparency";
 	QString showInactive = "show-inactive";
 } settingsKeys;
 
@@ -28,10 +29,11 @@ VolumeController::VolumeController(QWidget *parent, CustomStyle &style)
 	qDebug().nospace() << "Loading settings from " << settingsPath << ".";
 	QSettings settings(settingsPath, QSettings::IniFormat);
 	const auto darkTheme = settings.value(settingsKeys.darkTheme, false).toBool();
-	const auto transparentTheme = settings.value(settingsKeys.transparentTheme, false).toBool();
+	transparentTheme = settings.value(settingsKeys.transparentTheme, false).toBool();
+	transparentThemeAlpha = settings.value(settingsKeys.transparentThemeTransparency, 0.96078431).toReal();
 	const auto showInactive = settings.value(settingsKeys.showInactive, false).toBool();
 
-	const Theme &theme = SelectTheme(darkTheme, transparentTheme);
+	const Theme &theme = SelectTheme(darkTheme);
 	setBaseTheme(theme.base());
 	setStyleTheme(theme);
 	trayVolumeIcons = VolumeIcons(trayIconSize, theme.icon());
@@ -121,6 +123,7 @@ void VolumeController::saveSettings() {
 	qDebug() << "Saving to " << settingsPath << ".";
 	QSettings settings(settingsPath, QSettings::IniFormat);
 	settings.setValue(settingsKeys.darkTheme, toggleDarkThemeAction->isChecked());
+	settings.setValue(settingsKeys.transparentThemeTransparency, transparentThemeAlpha);
 	settings.setValue(settingsKeys.transparentTheme, toggleTransparentAction->isChecked());
 	settings.setValue(settingsKeys.showInactive, deviceVolumeController->controlList().showInactive());
 	settings.sync();
@@ -128,14 +131,13 @@ void VolumeController::saveSettings() {
 
 void VolumeController::setDarkTheme(bool value) {
 	const bool dark = value;
-	const bool transparent = toggleTransparentAction->isChecked();
-	changeTheme(SelectTheme(dark, transparent));
+	changeTheme(SelectTheme(dark));
 }
 
 void VolumeController::setTransparentTheme(bool value) {
 	const bool dark = toggleDarkThemeAction->isChecked();
-	const bool transparent = value;
-	changeTheme(SelectTheme(dark, transparent));
+	transparentTheme = value;
+	changeTheme(SelectTheme(dark));
 }
 
 void VolumeController::onDeviceVolumeChanged(const int volume) {
@@ -194,7 +196,11 @@ void VolumeController::changeTheme(const Theme &theme) {
 
 void VolumeController::setBaseTheme(const BaseTheme &theme){
 	auto p = palette();
-	p.setColor(QPalette::Window, theme.background);
+	QColor background = theme.background;
+	if(transparentTheme)
+		background.setAlphaF(transparentThemeAlpha);
+
+	p.setColor(QPalette::Window, background);
 	p.setColor(QPalette::WindowText, theme.text);
 	p.setColor(QPalette::Light, theme.light);
 	p.setColor(QPalette::Dark, theme.dark);
