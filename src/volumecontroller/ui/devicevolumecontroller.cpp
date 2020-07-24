@@ -77,6 +77,7 @@ void DeviceVolumeController::resizeEvent(QResizeEvent *) {
 void DeviceVolumeController::changeTheme(const DeviceVolumeControllerTheme &theme) {
 	volumeIcons = VolumeIcons(deviceVolumeIconSize, theme.icon());
 	deviceItem->updateThemeAndIcon(theme.volumeItem());
+	controlList().changeTheme(theme.volumeItem());
 }
 
 void DeviceVolumeController::addSession(AudioSession *sessionPtr) {

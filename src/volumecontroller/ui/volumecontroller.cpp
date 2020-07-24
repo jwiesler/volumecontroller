@@ -199,8 +199,6 @@ void VolumeController::setBaseTheme(const BaseTheme &theme){
 	p.setColor(QPalette::Light, theme.light);
 	p.setColor(QPalette::Dark, theme.dark);
 	setPalette(p);
-
-	windowFadeAnimation.setTargetValue(theme.background.alphaF());
 }
 
 void VolumeController::setStyleTheme(const Theme &theme){

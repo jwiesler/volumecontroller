@@ -29,6 +29,10 @@ public:
 
 	void setShowInactive(bool value);
 
+	void changeTheme(const VolumeItemTheme &item);
+
+	const VolumeItemTheme &itemTheme() const noexcept { return itemThemeRef.get(); }
+
 private:
 	std::unique_ptr<SessionVolumeItem> createItem(AudioSession &sessionControl, const AudioSessionPidGroup &group);
 	void createItems(bool showInactive);
@@ -53,7 +57,7 @@ private:
 	std::vector<SessionVolumeItemPtr> volumeItemsInactive;
 
 	bool _showInactive = false;
-	const VolumeItemTheme &itemTheme;
+	std::reference_wrapper<const VolumeItemTheme> itemThemeRef;
 };
 
 #endif // VOLUMECONTROLLIST_H

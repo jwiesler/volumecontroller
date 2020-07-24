@@ -171,7 +171,7 @@ Qt::Orientations GridLayout::expandingDirections() const {
 }
 
 void GridLayout::setGeometry(const QRect &rect) {
-	qDebug() << "Setting geometry to" << rect;
+//	qDebug() << "Setting geometry to" << rect;
 	for(auto &column : columns) {
 		column.width = 0;
 	}
@@ -179,23 +179,27 @@ void GridLayout::setGeometry(const QRect &rect) {
 	for(auto it = rows.begin(); it != rows.end(); ++it) {
 		auto &row = *it;
 		row.height = 0;
-		auto debug = qDebug();
-		debug << "Row" << std::distance(rows.begin(), it) << "with width" << row.items.size();
+//		auto debug = qDebug();
+//		debug << "Row" << std::distance(rows.begin(), it) << "with width" << row.items.size();
+//		bool empty = true;
 
 		ForeachTied([&](std::unique_ptr<QLayoutItem> &itemPtr, ColumnInfo &column) {
 			if(!itemPtr) {
-				debug << QSize(0, 0);
+//				debug << QSize(0, 0);
 				return;
 			}
+//			empty = false;
 
 			auto &item = *itemPtr;
 			const QSize value = item.sizeHint();
-			debug << value;
+//			debug << value;
 
 			column.width = std::max(column.width, value.width());
 			row.height = std::max(row.height, value.height());
 		}, row.items, columns);
-		debug << "final height" << row.height;
+//		debug << "final height" << row.height;
+//		if(empty)
+//			debug << "!!row was empty!!";
 	}
 
 	int totalWidth = 0;
@@ -218,9 +222,9 @@ void GridLayout::setGeometry(const QRect &rect) {
 		column.width += addW;
 	}
 
-	qDebug().nospace().noquote() << "column widths: " << Joiner(columns, ' ', [](auto &str, const auto &column) {
-		str << column.width;
-	});
+//	qDebug().nospace().noquote() << "column widths: " << Joiner(columns, ' ', [](auto &str, const auto &column) {
+//		str << column.width;
+//	});
 
 	int y = rect.y();
 	for(size_t j = 0; j < rows.size(); ++j) {

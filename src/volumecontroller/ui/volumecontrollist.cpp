@@ -23,7 +23,7 @@ VolumeControlList::VolumeControlList(QWidget *parent, AudioSessionGroups &sessio
 	: QWidget(parent),
 	  layout(this),
 	  sessionGroups(sessionGroups),
-	  itemTheme(itemTheme)
+	  itemThemeRef(itemTheme)
 {
 	QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
 	sizePolicy1.setHorizontalStretch(0);
@@ -132,8 +132,18 @@ void VolumeControlList::setShowInactive(bool value) {
 	}
 }
 
+void VolumeControlList::changeTheme(const VolumeItemTheme &item) {
+	itemThemeRef = std::ref(item);
+	for(auto &item : volumeItems) {
+		item->updateTheme(itemTheme());
+	}
+	for(auto &item : volumeItemsInactive) {
+		item->updateTheme(itemTheme());
+	}
+}
+
 std::unique_ptr<SessionVolumeItem> VolumeControlList::createItem(AudioSession &sessionControl, const AudioSessionPidGroup &group) {
-	std::unique_ptr<SessionVolumeItem> item = std::make_unique<SessionVolumeItem>(this, sessionControl, itemTheme);
+	std::unique_ptr<SessionVolumeItem> item = std::make_unique<SessionVolumeItem>(this, sessionControl, itemTheme());
 
 	Q_ASSERT(group.infoPtr());
 	item->setInfo(group.infoPtr()->icon(), group.infoPtr()->title());
