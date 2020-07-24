@@ -25,8 +25,8 @@ and you have to hit the current master volume exactly or the master volume will 
 ![VolumeController Screenshot](./img/VolumeController-dark-opaque.png)
 
 ## Installation ##
-I am currently not providing a packed binary so the only way to get the program is to compile it yourself.
-However this shouldn't be hard since a CMake file is contained and I did not use any libary except [Qt5](https://www.qt.io/).
+I am providing a packed [binary](https://github.com/jwiesler/volumecontroller/releases/download/v1.0/VolumeController.zip) but you can compile it yourself as well.
+This shouldn't be hard since a CMake file is contained and I did not use any libary except [Qt5](https://www.qt.io/).
 
 A config file is written to the folder of the executable, meaning the program needs to have write rights for this folder.
 
