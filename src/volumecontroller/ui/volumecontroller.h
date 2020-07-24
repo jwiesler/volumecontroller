@@ -47,14 +47,14 @@ private:
 	void setBaseTheme(const BaseTheme &theme);
 	void setStyleTheme(const Theme &theme);
 
-	void createActions(bool showInactiveInitial, bool darkThemeInitial, bool opaqueInitial);
+	void createActions(bool showInactiveInitial, bool darkThemeInitial, bool transparentInitial);
 	void createAnimations();
 	void createTray();
 
 	void saveSettings();
 
 	void setDarkTheme(bool value);
-	void setOpaqueTheme(bool value);
+	void setTransparentTheme(bool value);
 
 	void onDeviceVolumeChanged(int volume);
 	void updateTray();
@@ -70,7 +70,7 @@ private:
 	QSystemTrayIcon *trayIcon = nullptr;
 	QAction *showAction = nullptr;
 	QAction *showInactiveAction = nullptr;
-	QAction *toggleOpaqueAction = nullptr;
+	QAction *toggleTransparentAction = nullptr;
 	QAction *toggleDarkThemeAction = nullptr;
 	QAction *exitAction = nullptr;
 	VolumeIcons trayVolumeIcons;

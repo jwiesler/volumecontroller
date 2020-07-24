@@ -141,14 +141,14 @@ constexpr BaseTheme DarkBaseTheme {
 	LightGray, // dark
 };
 
-constexpr BaseTheme DefaultOpaqueBaseTheme {
+constexpr BaseTheme DefaultTransparentBaseTheme {
 	QColor(240, 240, 240, 245), // background
 	Black, // text
 	White, // light
 	QColor(160, 160, 160), // dark
 };
 
-constexpr BaseTheme DarkOpaqueBaseTheme {
+constexpr BaseTheme DarkTransparentBaseTheme {
 	QColor(55, 55, 55, 245), // background
 	White, // text
 	Gray6, // light
@@ -206,8 +206,8 @@ constexpr Theme DefaultTheme {
 	}
 };
 
-constexpr Theme DefaultOpaqueTheme {
-	DefaultOpaqueBaseTheme,
+constexpr Theme DefaultTransparentTheme {
+	DefaultTransparentBaseTheme,
 	DefaultTrayIconTheme,
 	DefaultSliderTheme,
 	DefaultButtonTheme,
@@ -229,8 +229,8 @@ constexpr Theme DarkTheme {
 	}
 };
 
-constexpr Theme DarkOpaqueTheme {
-	DarkOpaqueBaseTheme,
+constexpr Theme DarkTransparentTheme {
+	DarkTransparentBaseTheme,
 	DefaultTrayIconTheme,
 	DarkSliderTheme,
 	DarkButtonTheme,
@@ -240,10 +240,10 @@ constexpr Theme DarkOpaqueTheme {
 	}
 };
 
-constexpr const Theme &SelectTheme(bool dark, bool opaque) {
+constexpr const Theme &SelectTheme(bool dark, bool transparent) {
 	if(dark)
-		return opaque ? DarkOpaqueTheme : DarkTheme;
-	return opaque ? DefaultOpaqueTheme : DefaultTheme;
+		return transparent ? DarkTransparentTheme : DarkTheme;
+	return transparent ? DefaultTransparentTheme : DefaultTheme;
 }
 
 #endif // THEME_H
