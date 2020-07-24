@@ -1,6 +1,9 @@
 # VolumeController #
 
-![VolumeController Screenshot](./img/VolumeController.png)
+![VolumeController Screenshot](./img/VolumeController-default.png)
+![VolumeController Screenshot](./img/VolumeController-default-opaque.png)
+![VolumeController Screenshot](./img/VolumeController-dark.png)
+![VolumeController Screenshot](./img/VolumeController-dark-opaque.png)
 
 This project was created because the default windows audio mixer does not allow simple manipulation of individual audio session,
 e.g. restoring a session to its maximum volume is almost impossible as it is not relative but absolute 
@@ -12,6 +15,7 @@ and you have to hit the current master volume exactly or the master volume will 
 * Filter sessions (show and hide inactive sessions).
 * Peak meters
 * Lightweight
+* Themes: Dark/light and opaque/not opaque
 * No Windows App, therefore no Windows Store required to install it
 
 ## Installation ##

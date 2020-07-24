@@ -91,7 +91,7 @@ VolumeItemBase::VolumeItemBase(QWidget *parent, IAudioControl &ctrl, const Volum
 
 	_volumeLabel = new QLabel(parent);
 	QFont font = _volumeLabel->font();
-	font.setPointSize(14);
+	font.setPointSize(16);
 	font.setWeight(QFont::Weight::Medium);
 	_volumeLabel->setFont(font);
 	_volumeLabel->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
