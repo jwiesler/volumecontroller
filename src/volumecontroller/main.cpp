@@ -69,10 +69,10 @@ int main(int argc, char *argv[])
 
 	auto *ptr = QStyleFactory::create("windowsvista");
 	Q_ASSERT(ptr);
-	CustomStyle style(ptr);
-	QApplication::setStyle(&style);
+	CustomStyle *style = new CustomStyle(ptr);
+	QApplication::setStyle(style);
 
-	VolumeController w(nullptr, style);
+	VolumeController w(nullptr, *style);
 	w.setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
 	w.setAttribute(Qt::WA_TranslucentBackground);
 	w.setAttribute(Qt::WA_QuitOnClose);
