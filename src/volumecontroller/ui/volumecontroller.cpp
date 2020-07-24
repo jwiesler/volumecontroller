@@ -23,6 +23,7 @@ const struct {
 VolumeController::VolumeController(QWidget *parent, CustomStyle &style)
 	: QWidget(parent),
 	  windowFadeAnimation(this),
+	  windowFlyAnimation(this, {0, 0}, {0, 0}),
 	  _style(style)
 {
 	settingsPath = QDir::cleanPath(QApplication::applicationDirPath() + QDir::separator() + "settings.ini");
@@ -163,18 +164,22 @@ void VolumeController::onApplicationInactive(const QWidget *activeWindow) {
 
 void VolumeController::showEvent(QShowEvent *) {
 	windowFadeAnimation.finishAnimation();
+	windowFlyAnimation.finishAnimation();
 }
 
 void VolumeController::hideEvent(QHideEvent *) {
 	windowFadeAnimation.finishAnimation();
+	windowFlyAnimation.finishAnimation();
 }
 
 void VolumeController::fadeOut() {
-	windowFadeAnimation.fadeOut();
+	windowFadeAnimation.out();
+	windowFlyAnimation.out();
 }
 
 void VolumeController::fadeIn() {
-	windowFadeAnimation.fadeIn();
+	windowFadeAnimation.in();
+	windowFlyAnimation.in();
 	activateWindow();
 }
 
@@ -214,5 +219,10 @@ void VolumeController::setStyleTheme(const Theme &theme){
 
 void VolumeController::reposition() {
 	const auto rect = QApplication::primaryScreen()->availableGeometry();
-	move(rect.width() - width(), rect.height() - height());
+	const QPoint visiblePoint(rect.width() - width(), rect.height() - height());
+	const QPoint fadeOutPoint(visiblePoint.x(), visiblePoint.y() + height());
+	if(isVisible() && !windowFlyAnimation.isRunning())
+		move(visiblePoint);
+	windowFlyAnimation.setStartValue(fadeOutPoint);
+	windowFlyAnimation.setTargetValue(visiblePoint);
 }

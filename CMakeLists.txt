@@ -47,8 +47,8 @@ add_executable(VolumeController
     src/volumecontroller/ui/gridlayout.h
     src/volumecontroller/ui/volumecontrollist.cpp
     src/volumecontroller/ui/volumecontrollist.h
-    src/volumecontroller/ui/windowfadeanimation.cpp
-    src/volumecontroller/ui/windowfadeanimation.h
+    src/volumecontroller/ui/animations.cpp
+    src/volumecontroller/ui/animations.h
     src/volumecontroller/ui/volumeicons.cpp
     src/volumecontroller/ui/volumeicons.h
     src/volumecontroller/ui/devicevolumecontroller.cpp

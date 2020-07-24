@@ -4,7 +4,7 @@
 #include "volumecontrollist.h"
 #include "volumelistitem.h"
 #include "devicevolumecontroller.h"
-#include "windowfadeanimation.h"
+#include "animations.h"
 #include "customstyle.h"
 
 #include <QSystemTrayIcon>
@@ -63,7 +63,8 @@ private:
 	void reposition();
 
 	DeviceVolumeController *deviceVolumeController = nullptr;
-	WindowFadeAnimation windowFadeAnimation;
+	FadeAnimation windowFadeAnimation;
+	FlyAnimation windowFlyAnimation;
 	CustomStyle &_style;
 
 	bool transparentTheme = false;

@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 	QApplication::setStyle(style);
 
 	VolumeController w(nullptr, *style);
-	w.setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+	w.setWindowFlags(Qt::Tool | Qt::FramelessWindowHint/* | Qt::WindowStaysOnTopHint*/);
 	w.setAttribute(Qt::WA_TranslucentBackground);
 	w.setAttribute(Qt::WA_QuitOnClose);
 
