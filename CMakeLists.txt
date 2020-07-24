@@ -67,6 +67,7 @@ add_executable(VolumeController
 )
 
 target_include_directories(VolumeController PUBLIC src)
+target_compile_definitions(VolumeController PUBLIC ROTATE_LOG_FILE)
 target_link_libraries(VolumeController PRIVATE Qt5::Widgets Qt5::WinExtras Version.lib)
 
 qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
