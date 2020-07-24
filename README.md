@@ -1,8 +1,5 @@
 # VolumeController #
 
-![VolumeController Screenshot](./img/VolumeController-default.png)
-![VolumeController Screenshot](./img/VolumeController-default-opaque.png)
-![VolumeController Screenshot](./img/VolumeController-dark.png)
 ![VolumeController Screenshot](./img/VolumeController-dark-opaque.png)
 
 This project was created because the default windows audio mixer does not allow simple manipulation of individual audio session,
@@ -17,6 +14,15 @@ and you have to hit the current master volume exactly or the master volume will 
 * Lightweight
 * Themes: Dark/light and opaque/not opaque
 * No Windows App, therefore no Windows Store required to install it
+
+## Themes ##
+### Default (Normal and opaque) ###
+![VolumeController Screenshot](./img/VolumeController-default.png)
+![VolumeController Screenshot](./img/VolumeController-default-opaque.png)
+
+### Dark (Normal and opaque) ###
+![VolumeController Screenshot](./img/VolumeController-dark.png)
+![VolumeController Screenshot](./img/VolumeController-dark-opaque.png)
 
 ## Installation ##
 I am currently not providing a packed binary so the only way to get the program is to compile it yourself.
