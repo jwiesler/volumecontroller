@@ -65,7 +65,19 @@ int main(int argc, char *argv[])
 		qDebug() << "Logging to console";
 	}
 
+
+
 	QApplication a(argc, argv);
+	QApplication::setFont(QFont("Segoe UI"));
+
+	{
+		QString locale = QLocale::system().name();
+
+		QTranslator translator;
+		qDebug() << "Loading ts file" << "VolumeController_" + locale;
+		translator.load("VolumeController_" + locale);
+		a.installTranslator(&translator);
+	}
 
 	auto *ptr = QStyleFactory::create("windowsvista");
 	Q_ASSERT(ptr);
